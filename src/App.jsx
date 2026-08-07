@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import RoleRoute from '@/components/RoleRoute';
+import { STAFF_ROLES } from '@/lib/roles';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -61,10 +62,10 @@ const AuthenticatedApp = () => {
           <Route path="/templates" element={<TemplateVault />} />
           <Route path="/export" element={<ExportData />} />
           <Route path="/graduation" element={<Graduation />} />
-          <Route element={<RoleRoute allow={['coach', 'admin']} />}>
+          <Route element={<RoleRoute allow={STAFF_ROLES} />}>
             <Route path="/coach" element={<CoachConsole />} />
           </Route>
-          <Route element={<RoleRoute allow={['admin']} />}>
+          <Route element={<RoleRoute allow={STAFF_ROLES} />}>
             <Route path="/admin" element={<AdminPanel />} />
           </Route>
         </Route>

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useHostProfile } from "@/lib/useHostProfile";
 import { analyzeDeal, DEAL_STATUSES } from "@/lib/dealMath";
 import { computeDeal } from "@/functions/computeDeal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

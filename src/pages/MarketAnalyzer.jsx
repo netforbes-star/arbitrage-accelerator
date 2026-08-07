@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useHostProfile } from "@/lib/useHostProfile";
 import { analyzeMarket, REGULATION_STATUSES } from "@/lib/marketMath";
 import { computeMarket } from "@/functions/computeMarket";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

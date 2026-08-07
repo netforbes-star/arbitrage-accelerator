@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
+import { STAFF_ROLES, isStaff } from "@/lib/roles";
 import { base44 } from "@/api/base44Client";
 import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, MapPin, Users, FileText, ClipboardList, Shield, LogOut, Download } from "lucide-react";
 
 const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["host", "admin"] },
-  { to: "/program", label: "Program", icon: CalendarDays, roles: ["host", "admin"] },
-  { to: "/deals", label: "Deal Analyzer", icon: Calculator, roles: ["host", "admin"] },
-  { to: "/markets", label: "Markets", icon: MapPin, roles: ["host", "admin"] },
-  { to: "/landlords", label: "Landlords", icon: Users, roles: ["host", "admin"] },
-  { to: "/export", label: "Download", icon: Download, roles: ["host", "admin"] },
-  { to: "/templates", label: "Templates", icon: FileText, roles: ["host", "coach", "admin"] },
-  { to: "/coach", label: "Coach Console", icon: ClipboardList, roles: ["coach", "admin"] },
-  { to: "/admin", label: "Admin", icon: Shield, roles: ["admin"] }
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["host", ...STAFF_ROLES] },
+  { to: "/program", label: "Program", icon: CalendarDays, roles: ["host", ...STAFF_ROLES] },
+  { to: "/deals", label: "Deal Analyzer", icon: Calculator, roles: ["host", ...STAFF_ROLES] },
+  { to: "/markets", label: "Markets", icon: MapPin, roles: ["host", ...STAFF_ROLES] },
+  { to: "/landlords", label: "Landlords", icon: Users, roles: ["host", ...STAFF_ROLES] },
+  { to: "/export", label: "Download", icon: Download, roles: ["host", ...STAFF_ROLES] },
+  { to: "/templates", label: "Templates", icon: FileText, roles: ["host", ...STAFF_ROLES] },
+  { to: "/coach", label: "Coach Console", icon: ClipboardList, roles: STAFF_ROLES },
+  { to: "/admin", label: "Admin", icon: Shield, roles: STAFF_ROLES }
 ];
 
 export default function Layout() {
