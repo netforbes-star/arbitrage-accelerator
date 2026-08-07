@@ -77,6 +77,10 @@ for (const name of HOST_OWNED) {
   chk(JSON.stringify(rls?.create || {}).includes('created_by_id'), `B ${name}: create pins ownership server-side`);
   for (const op of ['update', 'delete'])
     chk(JSON.stringify(rls?.[op] || {}).includes('created_by_id'), `B ${name}: ${op} scoped to owner`);
+  // Single-coach model: access is never granted by a field the host controls.
+  for (const op of ['read', 'update', 'delete'])
+    chk(!JSON.stringify(rls?.[op] || {}).includes('data.coach_id'),
+      `B ${name}: ${op} does not grant access via host-writable coach_id`);
 }
 {
   const a = entity('AuditLog');
@@ -96,8 +100,20 @@ for (const name of HOST_OWNED) {
 {
   const u = entity('User');
   chk(!!u.rls, 'B User: RLS present in the repo file (survives redeploy)');
-  chk(JSON.stringify(u.rls?.update || {}).includes('admin'), 'B User: update admin-only, blocks self role escalation');
+  const upd = JSON.stringify(u.rls?.update || {});
+  chk(upd.includes('admin') && !upd.includes('created_by_id') && !upd.includes('{{user.id}}'),
+    'B User: update is staff-only, blocks self role escalation');
   chk(Array.isArray(u.required) && u.required.length === 0, 'B User: no required fields that would break sign-up');
+
+  // Single-coach model assertions
+  const roles = read(at('src/lib/roles.js'));
+  chk(/STAFF_ROLES\s*=\s*\["coach", ?"admin"\]/.test(roles), 'B roles: coach and admin are one staff concept');
+  const srcAll = src.map(read).join('\n');
+  chk(!/coachAssign|assigned_coach|coach_id:\s*coachId/.test(srcAll),
+    'B no coach-assignment logic remains in the client');
+  chk(!/coachId/.test(srcAll), 'B no per-host coach routing left in the client');
+  for (const e of ['Deal', 'Landlord', 'OnboardingProfile'])
+    chk(!!entity(e).properties.coach_id, `B ${e}.coach_id retained for backwards compatibility`);
 }
 
 /* ── C. ROUTE + ROLE GUARDS ───────────────────────────────────────────── */
