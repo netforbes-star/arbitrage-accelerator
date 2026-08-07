@@ -1,98 +1,99 @@
-// Deal Analyzer — conservative-by-default underwriting engine.
-// Locked assumptions are overridden only when the host supplies a logged reason.
+// Deal Analyzer — two explicit revenue modes, cash profit vs true profit.
+// PASS/FAIL is tested against CASH PROFIT at the $500/month floor.
 
 export const DEFAULTS = {
   occupancy: 0.6,
-  adr: 120,
-  costRatio: 0.3,
+  costRatio: 0.3, // cleaning, supplies, platform fees
   furnitureReserveRate: 0.05,
   maintenance: 100,
-  managementRate: 20, // $/hr
+  managementRate: 20,
   managementHoursPerWeek: 5,
-  profitFloor: 500
+  profitFloor: 500,
+  defaultHaircut: 0.15
 };
 
+const num = (v, d = 0) => (v === "" || v == null || isNaN(Number(v)) ? d : Number(v));
+
 export function analyzeDeal(input) {
-  const rent = Number(input.monthly_rent) || 0;
-  const utilities = Number(input.utilities) || 0;
-  const furnishing = Number(input.furnishing_cost) || 0;
-  const strRev = Number(input.str_revenue_estimate) || 0;
-  const mtrRev = Number(input.mtr_revenue_estimate) || 0;
+  const mode = input.revenue_mode || "nightly";
+  const occupancy = input.occupancy != null && input.occupancy !== "" ? num(input.occupancy, DEFAULTS.occupancy) : DEFAULTS.occupancy;
+  const nightlyAdr = num(input.nightly_adr);
+  const monthlyRaw = num(input.monthly_str_revenue);
+  const haircut = input.conservatism_haircut != null && input.conservatism_haircut !== "" ? num(input.conservatism_haircut, DEFAULTS.defaultHaircut) : DEFAULTS.defaultHaircut;
+  const rent = num(input.monthly_rent);
+  const utilities = num(input.utilities);
+  const furnishing = num(input.furnishing_cost);
+  const mtrRev = num(input.mtr_revenue_estimate);
 
-  const hasOccOverride = input.occupancy_override != null && input.occupancy_override !== "";
-  const occupancy = hasOccOverride ? Number(input.occupancy_override) : DEFAULTS.occupancy;
+  let grossRevenue = 0;
+  let haircutAmount = 0;
+  const haircutApplied = mode === "monthly";
 
-  const compAdr = strRev > 0 ? strRev / 30 : Infinity;
-  const hasAdrOverride = input.adr_override != null && input.adr_override !== "";
-  let adr = hasAdrOverride ? Number(input.adr_override) : Math.min(DEFAULTS.adr, compAdr);
-  if (!isFinite(adr) || adr <= 0) adr = DEFAULTS.adr;
+  if (mode === "monthly") {
+    haircutAmount = monthlyRaw * haircut;
+    grossRevenue = monthlyRaw - haircutAmount;
+  } else {
+    grossRevenue = nightlyAdr * occupancy * 30;
+  }
 
-  const hasCostOverride = input.cost_ratio_override != null && input.cost_ratio_override !== "";
-  const costRatio = hasCostOverride ? Number(input.cost_ratio_override) : DEFAULTS.costRatio;
-
-  const grossStr = adr * occupancy * 30;
-  const turnoverFees = costRatio * grossStr;
-  const furnitureReserve = DEFAULTS.furnitureReserveRate * grossStr;
+  const variableCosts = DEFAULTS.costRatio * grossRevenue;
+  const furnitureReserve = DEFAULTS.furnitureReserveRate * grossRevenue;
   const maintenance = DEFAULTS.maintenance;
-  const management = (DEFAULTS.managementRate * DEFAULTS.managementHoursPerWeek * 52) / 12;
+  const managementValue = (DEFAULTS.managementRate * DEFAULTS.managementHoursPerWeek * 52) / 12;
 
-  const fixedCosts = rent + utilities + maintenance + management;
-  const allInCost = fixedCosts + turnoverFees + furnitureReserve;
+  const cashProfit = grossRevenue - variableCosts - furnitureReserve - rent - utilities - maintenance;
+  const trueProfit = cashProfit - managementValue;
 
-  const strProfit = grossStr - allInCost;
-  // MTR: far less turnover, no nightly platform fees, minimal furniture reserve
-  const mtrAllIn = rent + utilities + maintenance + management;
-  const mtrProfit = mtrRev - mtrAllIn;
+  const margin = grossRevenue > 0 ? (cashProfit / grossRevenue) * 100 : 0;
+  const monthsToRecoup = cashProfit > 0 ? furnishing / cashProfit : null;
 
-  const strMargin = grossStr > 0 ? (strProfit / grossStr) * 100 : 0;
-  const monthsToRecoup = strProfit > 0 ? furnishing / strProfit : null;
+  // MTR comparison (lower turnover, no nightly platform fees)
+  const mtrProfit = mtrRev - (rent + utilities + maintenance);
+  const recommended = mtrProfit > cashProfit ? "Mid-Term Rental (MTR)" : "Short-Term Rental (STR)";
 
-  const recommended = mtrProfit > strProfit ? "Mid-Term Rental (MTR)" : "Short-Term Rental (STR)";
-  const bestProfit = Math.max(strProfit, mtrProfit);
-  const verdict = bestProfit >= DEFAULTS.profitFloor ? "PASS" : "FAIL";
+  const verdict = cashProfit >= DEFAULTS.profitFloor ? "PASS" : "FAIL";
 
   let failFix = "";
   if (verdict === "FAIL") {
-    const shortfall = DEFAULTS.profitFloor - bestProfit;
+    const shortfall = DEFAULTS.profitFloor - cashProfit;
     const rentCut = Math.max(0, shortfall);
-    const netFactor = 1 - costRatio - DEFAULTS.furnitureReserveRate;
-    const neededGross = netFactor > 0 ? (DEFAULTS.profitFloor + fixedCosts) / netFactor : 0;
-    failFix =
-      `To clear the $${DEFAULTS.profitFloor}/mo floor you'd need to either lower monthly rent by $${Math.round(
-        rentCut
-      )}/mo (to $${Math.max(0, Math.round(rent - rentCut))}/mo), raise your STR revenue estimate to $${Math.round(
-        neededGross
-      )}/mo, or cut furnishing cost. You're $${Math.round(
-        shortfall
-      )}/mo short right now — this is the app doing its job and saving you from a deal that would lose money.`;
+    const netFactor = 1 - DEFAULTS.costRatio - DEFAULTS.furnitureReserveRate;
+    const neededGross = netFactor > 0 ? (DEFAULTS.profitFloor + rent + utilities + maintenance) / netFactor : 0;
+    let fix = `To clear the $${DEFAULTS.profitFloor}/mo cash-profit floor you're $${Math.round(shortfall)}/mo short. Options:`;
+    fix += `\n• Lower monthly rent by $${Math.round(rentCut)}/mo (to $${Math.max(0, Math.round(rent - rentCut))}/mo).`;
+    if (mode === "nightly") {
+      const neededAdr = occupancy > 0 ? neededGross / (occupancy * 30) : 0;
+      fix += `\n• Raise your nightly ADR to $${Math.round(neededAdr)}/night (from $${Math.round(nightlyAdr)}).`;
+    } else {
+      const neededMonthly = haircut > 0 && haircut < 1 ? neededGross / (1 - haircut) : neededGross;
+      fix += `\n• Raise your monthly revenue estimate to $${Math.round(neededMonthly)}/mo (from $${Math.round(monthlyRaw)}).`;
+    }
+    fix += `\n• Cut furnishing cost to free up cash flow.`;
+    failFix = fix;
   }
 
+  const timeWarning = verdict === "PASS" && trueProfit < 0;
+
   return {
-    adr,
-    occupancy,
-    grossStr,
-    turnoverFees,
+    mode,
+    grossRevenue,
+    haircutAmount,
+    haircutApplied,
+    haircut,
+    variableCosts,
     furnitureReserve,
     maintenance,
-    management,
-    fixedCosts,
-    allInCost,
-    strProfit,
-    mtrProfit,
-    strMargin,
+    managementValue,
+    cashProfit,
+    trueProfit,
+    margin,
     monthsToRecoup,
+    mtrProfit,
     recommended,
     verdict,
     failFix,
-    usingOverrides: hasAdrOverride || hasOccOverride || hasCostOverride
+    timeWarning
   };
 }
 
-export const DEAL_STATUSES = [
-  "evaluating",
-  "outreach sent",
-  "negotiating",
-  "lease signed",
-  "passed",
-  "lost"
-];
+export const DEAL_STATUSES = ["evaluating", "outreach sent", "negotiating", "lease signed", "passed", "lost"];

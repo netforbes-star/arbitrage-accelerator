@@ -1,0 +1,68 @@
+{
+  "name": "ObjectionResponse",
+  "type": "object",
+  "properties": {
+    "objection_key": {
+      "type": "string"
+    },
+    "objection_text": {
+      "type": "string"
+    },
+    "annette_answer": {
+      "type": "string"
+    },
+    "host_response": {
+      "type": "string"
+    },
+    "coach_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "objection_key"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.coach_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

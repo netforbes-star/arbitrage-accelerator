@@ -2,21 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useHostProfile } from "@/lib/useHostProfile";
 import { analyzeDeal, DEAL_STATUSES } from "@/lib/dealMath";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Calculator, Plus, TrendingUp, TrendingDown, CheckCircle2, XCircle, Pencil, Trash2 } from "lucide-react";
+import { Calculator, Plus, CheckCircle2, XCircle, Pencil, Trash2, AlertTriangle } from "lucide-react";
 
 const EMPTY = {
   nickname: "", beds: 2, baths: 1, monthly_rent: "", utilities: "", furnishing_cost: "",
   deposit: "", drive_time_minutes: "", location_score: "", size_score: "", condition_score: "",
-  str_revenue_estimate: "", mtr_revenue_estimate: "",
-  adr_override: "", occupancy_override: "", cost_ratio_override: "", override_reason: "",
-  permission_type: "none", permission_artifact_url: "", status: "evaluating"
+  revenue_mode: "nightly", nightly_adr: "", monthly_str_revenue: "", occupancy: "0.6", conservatism_haircut: "0.15", haircut_override_reason: "",
+  mtr_revenue_estimate: "", permission_type: "none", permission_artifact_url: "", status: "evaluating"
 };
 
 export default function DealAnalyzer() {
@@ -36,10 +35,8 @@ export default function DealAnalyzer() {
   useEffect(() => { load(); }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
   const result = useMemo(() => analyzeDeal(form), [form]);
-
-  const usingOverrides = form.adr_override !== "" || form.occupancy_override !== "" || form.cost_ratio_override !== "";
+  const monthly = form.revenue_mode === "monthly";
 
   const reset = () => { setForm({ ...EMPTY }); setEditingId(null); setError(""); };
 
@@ -59,15 +56,15 @@ export default function DealAnalyzer() {
       drive_time_minutes: Number(form.drive_time_minutes) || 0,
       location_score: Number(form.location_score) || 0, size_score: Number(form.size_score) || 0,
       condition_score: Number(form.condition_score) || 0,
-      str_revenue_estimate: Number(form.str_revenue_estimate) || 0,
+      nightly_adr: Number(form.nightly_adr) || 0, monthly_str_revenue: Number(form.monthly_str_revenue) || 0,
+      occupancy: Number(form.occupancy) || 0.6, conservatism_haircut: Number(form.conservatism_haircut) || 0.15,
       mtr_revenue_estimate: Number(form.mtr_revenue_estimate) || 0,
-      adr_override: form.adr_override === "" ? null : Number(form.adr_override),
-      occupancy_override: form.occupancy_override === "" ? null : Number(form.occupancy_override),
-      cost_ratio_override: form.cost_ratio_override === "" ? null : Number(form.cost_ratio_override),
-      all_in_monthly_cost: Math.round(result.allInCost),
-      conservative_str_profit: Math.round(result.strProfit),
-      conservative_mtr_profit: Math.round(result.mtrProfit),
-      profit_margin_pct: Math.round(result.strMargin),
+      gross_revenue: Math.round(result.grossRevenue),
+      variable_costs: Math.round(result.variableCosts),
+      furniture_reserve: Math.round(result.furnitureReserve),
+      cash_profit: Math.round(result.cashProfit),
+      true_profit: Math.round(result.trueProfit),
+      profit_margin_pct: Math.round(result.margin),
       months_to_recoup: result.monthsToRecoup ? Math.round(result.monthsToRecoup * 10) / 10 : null,
       recommended_strategy: result.recommended,
       verdict: result.verdict,
@@ -86,21 +83,19 @@ export default function DealAnalyzer() {
 
   const edit = (d) => {
     setEditingId(d.id);
-    setForm({ ...EMPTY, ...d, adr_override: d.adr_override ?? "", occupancy_override: d.occupancy_override ?? "", cost_ratio_override: d.cost_ratio_override ?? "" });
+    setForm({ ...EMPTY, ...d, occupancy: d.occupancy ?? "0.6", conservatism_haircut: d.conservatism_haircut ?? "0.15" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
   const remove = async (id) => { await base44.entities.Deal.delete(id); load(); };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" /></div>;
-
   const pass = result.verdict === "PASS";
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand flex items-center gap-2"><Calculator className="w-6 h-6" /> Deal Analyzer</h1>
-        <p className="text-slate-500 text-sm">Conservative by default. Every run saves as a Deal you can track through to lease signing.</p>
+        <p className="text-slate-500 text-sm">Two revenue modes. PASS/FAIL is tested against <strong>cash profit</strong> at the $500/mo floor. True profit shows what's left after paying yourself for your time.</p>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-6">
@@ -112,6 +107,35 @@ export default function DealAnalyzer() {
               <Field label="Beds"><Input type="number" value={form.beds} onChange={(e) => set("beds", e.target.value)} /></Field>
               <Field label="Baths"><Input type="number" value={form.baths} onChange={(e) => set("baths", e.target.value)} /></Field>
             </div>
+
+            <div className="border border-slate-200 rounded-lg p-3 space-y-3">
+              <div className="text-sm font-medium text-slate-700">Revenue mode</div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => set("revenue_mode", "nightly")} className={`p-2.5 rounded-lg border text-left ${!monthly ? "border-brand bg-brand/5" : "border-slate-200"}`}>
+                  <div className="text-sm font-medium text-slate-800">A · Nightly rate from comps</div>
+                  <div className="text-xs text-slate-400">ADR × occupancy × 30</div>
+                </button>
+                <button type="button" onClick={() => set("revenue_mode", "monthly")} className={`p-2.5 rounded-lg border text-left ${monthly ? "border-brand bg-brand/5" : "border-slate-200"}`}>
+                  <div className="text-sm font-medium text-slate-800">B · Monthly revenue (AirDNA/PriceLabs)</div>
+                  <div className="text-xs text-slate-400">Used directly, 15% haircut</div>
+                </button>
+              </div>
+              {!monthly ? (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <Field label="Nightly ADR ($)"><Input type="number" value={form.nightly_adr} onChange={(e) => set("nightly_adr", e.target.value)} /></Field>
+                  <Field label="Occupancy (default 0.6)"><Input type="number" step="0.01" value={form.occupancy} onChange={(e) => set("occupancy", e.target.value)} /></Field>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <Field label="Monthly STR revenue ($)"><Input type="number" value={form.monthly_str_revenue} onChange={(e) => set("monthly_str_revenue", e.target.value)} /></Field>
+                  <Field label="Conservatism haircut (default 0.15)"><Input type="number" step="0.01" value={form.conservatism_haircut} onChange={(e) => set("conservatism_haircut", e.target.value)} /></Field>
+                </div>
+              )}
+              {monthly && form.conservatism_haircut !== "0.15" && (
+                <Field label="Reason for overriding the 15% haircut"><Textarea rows={2} value={form.haircut_override_reason} onChange={(e) => set("haircut_override_reason", e.target.value)} /></Field>
+              )}
+            </div>
+
             <div className="grid sm:grid-cols-3 gap-3">
               <Field label="Monthly rent ($)"><Input type="number" value={form.monthly_rent} onChange={(e) => set("monthly_rent", e.target.value)} /></Field>
               <Field label="Utilities ($)"><Input type="number" value={form.utilities} onChange={(e) => set("utilities", e.target.value)} /></Field>
@@ -123,21 +147,10 @@ export default function DealAnalyzer() {
               <Field label="Location 1-10"><Input type="number" min="1" max="10" value={form.location_score} onChange={(e) => set("location_score", e.target.value)} /></Field>
               <Field label="Size 1-10"><Input type="number" min="1" max="10" value={form.size_score} onChange={(e) => set("size_score", e.target.value)} /></Field>
             </div>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 gap-3">
               <Field label="Condition 1-10"><Input type="number" min="1" max="10" value={form.condition_score} onChange={(e) => set("condition_score", e.target.value)} /></Field>
-              <Field label="STR revenue est. ($/mo)"><Input type="number" value={form.str_revenue_estimate} onChange={(e) => set("str_revenue_estimate", e.target.value)} /></Field>
               <Field label="MTR revenue est. ($/mo)"><Input type="number" value={form.mtr_revenue_estimate} onChange={(e) => set("mtr_revenue_estimate", e.target.value)} /></Field>
             </div>
-
-            <details className="border-t border-slate-100 pt-3">
-              <summary className="text-sm font-medium text-slate-600 cursor-pointer">Override conservative assumptions (requires a logged reason)</summary>
-              <div className="grid sm:grid-cols-3 gap-3 mt-3">
-                <Field label={`ADR ($/night) — default ${Math.min(120, form.str_revenue_estimate ? form.str_revenue_estimate / 30 : 120).toFixed(0)}`}><Input type="number" value={form.adr_override} onChange={(e) => set("adr_override", e.target.value)} placeholder="leave blank for default" /></Field>
-                <Field label="Occupancy — default 60%"><Input type="number" step="0.01" value={form.occupancy_override} onChange={(e) => set("occupancy_override", e.target.value)} placeholder="0.6" /></Field>
-                <Field label="Cost ratio — default 30%"><Input type="number" step="0.01" value={form.cost_ratio_override} onChange={(e) => set("cost_ratio_override", e.target.value)} placeholder="0.3" /></Field>
-              </div>
-              <Field label="Reason for override"><Textarea rows={2} value={form.override_reason} onChange={(e) => set("override_reason", e.target.value)} placeholder="Why are you adjusting the conservative default?" /></Field>
-            </details>
 
             <div className="grid sm:grid-cols-2 gap-3 border-t border-slate-100 pt-3">
               <Field label="Written permission type">
@@ -151,23 +164,18 @@ export default function DealAnalyzer() {
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="Evidence URL (upload link)"><Input value={form.permission_artifact_url} onChange={(e) => set("permission_artifact_url", e.target.value)} placeholder="https://..." /></Field>
+              <Field label="Evidence URL"><Input value={form.permission_artifact_url} onChange={(e) => set("permission_artifact_url", e.target.value)} placeholder="https://..." /></Field>
             </div>
             {form.permission_type === "verbal" && <p className="text-xs text-amber-600">Verbal permission is not permission — a change in property management ends it. Get it in writing before marking lease signed.</p>}
 
-            <div className="grid sm:grid-cols-2 gap-3">
-              <Field label="Deal status">
-                <Select value={form.status} onValueChange={(v) => set("status", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {DEAL_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
+            <Field label="Deal status">
+              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{DEAL_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
 
             {error && <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
-
             <div className="flex gap-2">
               <Button onClick={save} disabled={saving} className="bg-brand hover:bg-brand-bright flex-1">{saving ? "Saving…" : editingId ? "Update deal" : "Save deal"}</Button>
               {editingId && <Button variant="outline" onClick={reset}>Cancel</Button>}
@@ -182,21 +190,46 @@ export default function DealAnalyzer() {
               {pass ? <CheckCircle2 className="w-7 h-7 text-green-600" /> : <XCircle className="w-7 h-7 text-amber-500" />}
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             <div className={`text-3xl font-extrabold ${pass ? "text-green-600" : "text-amber-500"}`}>{pass ? "PURSUE THIS DEAL" : "FAIL"}</div>
             <div className="text-sm text-slate-500">Recommended strategy: <span className="font-medium text-slate-700">{result.recommended}</span></div>
-            {usingOverrides && <Badge variant="secondary" className="bg-amber-100 text-amber-700">Using overrides — reason required</Badge>}
-            <Row label="ADR used" value={`$${result.adr.toFixed(0)}/night`} />
-            <Row label="Occupancy" value={`${(result.occupancy * 100).toFixed(0)}%`} />
-            <Row label="Gross STR revenue" value={`$${Math.round(result.grossStr)}/mo`} />
-            <Row label="All-in monthly cost" value={`$${Math.round(result.allInCost)}/mo`} />
-            <div className="border-t border-slate-100 pt-2">
-              <Row label="Conservative STR profit" value={`$${Math.round(result.strProfit)}/mo`} bold />
-              <Row label="Conservative MTR profit" value={`$${Math.round(result.mtrProfit)}/mo`} />
-              <Row label="Profit margin" value={`${Math.round(result.strMargin)}%`} />
-              {result.monthsToRecoup && <Row label="Months to recoup furnishing" value={`${result.monthsToRecoup.toFixed(1)}`} />}
+
+            <div className="border-t border-slate-100 pt-2 space-y-1.5">
+              <div className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Revenue</div>
+              <Row label={`Gross revenue (${monthly ? "after haircut" : "ADR × occ × 30"})`} value={`$${Math.round(result.grossRevenue)}/mo`} />
+              {monthly && <Row label={`− ${Math.round(result.haircut * 100)}% conservatism haircut`} value={`−$${Math.round(result.haircutAmount)}/mo`} muted />}
             </div>
-            {!pass && <p className="text-sm text-slate-600 bg-amber-50 p-3 rounded-lg">{result.failFix}</p>}
+            <div className="border-t border-slate-100 pt-2 space-y-1.5">
+              <div className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Costs</div>
+              <Row label="− Variable costs (30% cleaning/supplies/fees)" value={`−$${Math.round(result.variableCosts)}/mo`} muted />
+              <Row label="− Furniture reserve (5%)" value={`−$${Math.round(result.furnitureReserve)}/mo`} muted />
+              <Row label="− Rent" value={`−$${Math.round(Number(form.monthly_rent) || 0)}/mo`} muted />
+              <Row label="− Utilities" value={`−$${Math.round(Number(form.utilities) || 0)}/mo`} muted />
+              <Row label="− Maintenance (min $100)" value={`−$${Math.round(result.maintenance)}/mo`} muted />
+            </div>
+
+            <div className="border-t-2 border-brand-gold/40 pt-2">
+              <Row label="= CASH PROFIT (verdict basis)" value={`$${Math.round(result.cashProfit)}/mo`} bold />
+              <div className="text-xs text-slate-400">tested against the $500/mo floor</div>
+            </div>
+            <div className="border-t border-slate-100 pt-2">
+              <Row label="− Your time ($20/hr × 5hr/wk)" value={`−$${Math.round(result.managementValue)}/mo`} muted />
+              <div className="border-t border-slate-100 pt-1.5 mt-1.5">
+                <Row label="= TRUE PROFIT (after paying yourself)" value={`$${Math.round(result.trueProfit)}/mo`} bold />
+              </div>
+            </div>
+
+            <div className="flex justify-between text-sm pt-1"><span className="text-slate-500">Margin</span><span className="font-medium text-slate-700">{Math.round(result.margin)}%</span></div>
+            {result.monthsToRecoup && <div className="flex justify-between text-sm"><span className="text-slate-500">Months to recoup furnishing</span><span className="font-medium text-slate-700">{result.monthsToRecoup.toFixed(1)}</span></div>}
+            <div className="flex justify-between text-sm"><span className="text-slate-500">MTR profit (comparison)</span><span className="font-medium text-slate-700">${Math.round(result.mtrProfit)}/mo</span></div>
+
+            {result.timeWarning && (
+              <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 p-2.5 rounded-lg mt-2">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>Cash profit passes, but true profit is negative. This deal only works if your time is free — consider a property manager or a tighter operation.</span>
+              </div>
+            )}
+            {!pass && <p className="text-sm text-slate-600 bg-amber-50 p-3 rounded-lg whitespace-pre-line mt-2">{result.failFix}</p>}
           </CardContent>
         </Card>
       </div>
@@ -215,7 +248,7 @@ export default function DealAnalyzer() {
                     <Badge className={d.verdict === "PASS" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}>{d.verdict}</Badge>
                     <Badge variant="secondary" className="text-xs">{d.status}</Badge>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{d.recommended_strategy} · ~${d.conservative_str_profit}/mo profit</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{d.recommended_strategy} · cash ${d.cash_profit}/mo · true ${d.true_profit}/mo</div>
                 </div>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => edit(d)}><Pencil className="w-4 h-4" /></Button>
@@ -231,18 +264,13 @@ export default function DealAnalyzer() {
 }
 
 function Field({ label, children }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-slate-600">{label}</Label>
-      {children}
-    </div>
-  );
+  return <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-600">{label}</Label>{children}</div>;
 }
-function Row({ label, value, bold }) {
+function Row({ label, value, bold, muted }) {
   return (
     <div className="flex justify-between text-sm">
-      <span className="text-slate-500">{label}</span>
-      <span className={bold ? "font-bold text-brand" : "font-medium text-slate-800"}>{value}</span>
+      <span className={muted ? "text-slate-400" : "text-slate-500"}>{label}</span>
+      <span className={bold ? "font-bold text-brand" : muted ? "font-medium text-slate-500" : "font-medium text-slate-800"}>{value}</span>
     </div>
   );
 }

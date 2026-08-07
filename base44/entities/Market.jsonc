@@ -1,0 +1,139 @@
+{
+  "name": "Market",
+  "type": "object",
+  "properties": {
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "submarket": {
+      "type": "string"
+    },
+    "adr": {
+      "type": "number"
+    },
+    "occupancy_rate": {
+      "type": "number",
+      "description": "0-100"
+    },
+    "revpar": {
+      "type": "number"
+    },
+    "active_listings": {
+      "type": "number"
+    },
+    "comp_count": {
+      "type": "number"
+    },
+    "comp_revenue_low": {
+      "type": "number"
+    },
+    "comp_revenue_median": {
+      "type": "number"
+    },
+    "comp_revenue_high": {
+      "type": "number"
+    },
+    "average_market_rent": {
+      "type": "number"
+    },
+    "regulation_status": {
+      "type": "string",
+      "enum": [
+        "permitted",
+        "restricted",
+        "banned",
+        "pending"
+      ],
+      "default": "pending"
+    },
+    "regulation_source_url": {
+      "type": "string"
+    },
+    "regulation_evidence_url": {
+      "type": "string"
+    },
+    "data_pulled_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "arbitrage_spread": {
+      "type": "number"
+    },
+    "spread_ratio": {
+      "type": "number"
+    },
+    "composite_score": {
+      "type": "number"
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": [
+        "go",
+        "hold",
+        "no_go"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "stale_data_flag": {
+      "type": "boolean"
+    },
+    "thin_market_flag": {
+      "type": "boolean"
+    },
+    "coach_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "city"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.coach_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -35,23 +35,33 @@
     "condition_score": {
       "type": "number"
     },
-    "str_revenue_estimate": {
+    "revenue_mode": {
+      "type": "string",
+      "enum": [
+        "nightly",
+        "monthly"
+      ],
+      "default": "nightly"
+    },
+    "nightly_adr": {
       "type": "number"
+    },
+    "monthly_str_revenue": {
+      "type": "number"
+    },
+    "occupancy": {
+      "type": "number",
+      "default": 0.6
+    },
+    "conservatism_haircut": {
+      "type": "number",
+      "default": 0.15
+    },
+    "haircut_override_reason": {
+      "type": "string"
     },
     "mtr_revenue_estimate": {
       "type": "number"
-    },
-    "adr_override": {
-      "type": "number"
-    },
-    "occupancy_override": {
-      "type": "number"
-    },
-    "cost_ratio_override": {
-      "type": "number"
-    },
-    "override_reason": {
-      "type": "string"
     },
     "permission_type": {
       "type": "string",
@@ -66,13 +76,19 @@
     "permission_artifact_url": {
       "type": "string"
     },
-    "all_in_monthly_cost": {
+    "gross_revenue": {
       "type": "number"
     },
-    "conservative_str_profit": {
+    "variable_costs": {
       "type": "number"
     },
-    "conservative_mtr_profit": {
+    "furniture_reserve": {
+      "type": "number"
+    },
+    "cash_profit": {
+      "type": "number"
+    },
+    "true_profit": {
       "type": "number"
     },
     "profit_margin_pct": {

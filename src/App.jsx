@@ -17,6 +17,7 @@ import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
 import Program from '@/pages/Program';
 import DealAnalyzer from '@/pages/DealAnalyzer';
+import MarketAnalyzer from '@/pages/MarketAnalyzer';
 import LandlordCRM from '@/pages/LandlordCRM';
 import TemplateVault from '@/pages/TemplateVault';
 import CoachConsole from '@/pages/CoachConsole';
@@ -51,6 +52,7 @@ const AuthenticatedApp = () => {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/program" element={<Program />} />
           <Route path="/deals" element={<DealAnalyzer />} />
+          <Route path="/markets" element={<MarketAnalyzer />} />
           <Route path="/landlords" element={<LandlordCRM />} />
           <Route path="/templates" element={<TemplateVault />} />
           <Route path="/graduation" element={<Graduation />} />

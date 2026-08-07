@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { dayDate, WEEK_THEMES, WEEK_BLURBS } from "@/lib/curriculum";
 import { CheckCircle2, Circle, Lock, SkipForward, ShieldCheck } from "lucide-react";
+import BuyBoxSection from "@/components/BuyBoxSection";
+import ObjectionSection from "@/components/ObjectionSection";
 
 export default function Program() {
   const { coachId } = useHostProfile();
@@ -143,6 +145,8 @@ export default function Program() {
                           </div>
                         );
                       })}
+                      {d.day === 1 && <BuyBoxSection coachId={coachId} />}
+                      {d.day === 13 && <ObjectionSection coachId={coachId} />}
                     </CardContent>
                   </Card>
                 ))}

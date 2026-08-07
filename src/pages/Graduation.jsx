@@ -21,7 +21,7 @@ export default function Graduation() {
   const contacted = data.landlords.filter((l) => l.stage !== "not contacted").length;
   const conversations = data.landlords.filter((l) => ["conversation held", "property viewed", "negotiating", "won"].includes(l.stage)).length;
   const signed = data.deals.filter((d) => d.status === "lease signed").length;
-  const projected = data.deals.filter((d) => d.verdict === "PASS").reduce((s, d) => s + (d.conservative_str_profit || 0), 0);
+  const projected = data.deals.filter((d) => d.verdict === "PASS").reduce((s, d) => s + (d.cash_profit || 0), 0);
 
   let diagnosis = "";
   if (signed > 0) {

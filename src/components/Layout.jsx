@@ -2,12 +2,13 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { base44 } from "@/api/base44Client";
-import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, Users, FileText, ClipboardList, Shield, LogOut } from "lucide-react";
+import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, MapPin, Users, FileText, ClipboardList, Shield, LogOut } from "lucide-react";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["host", "admin"] },
   { to: "/program", label: "Program", icon: CalendarDays, roles: ["host", "admin"] },
   { to: "/deals", label: "Deal Analyzer", icon: Calculator, roles: ["host", "admin"] },
+  { to: "/markets", label: "Markets", icon: MapPin, roles: ["host", "admin"] },
   { to: "/landlords", label: "Landlords", icon: Users, roles: ["host", "admin"] },
   { to: "/templates", label: "Templates", icon: FileText, roles: ["host", "coach", "admin"] },
   { to: "/coach", label: "Coach Console", icon: ClipboardList, roles: ["coach", "admin"] },

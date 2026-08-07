@@ -1,0 +1,90 @@
+{
+  "name": "BuyBox",
+  "type": "object",
+  "properties": {
+    "bedrooms": {
+      "type": "number",
+      "default": 2
+    },
+    "bathrooms": {
+      "type": "number",
+      "default": 1
+    },
+    "max_monthly_rent": {
+      "type": "number"
+    },
+    "max_drive_time_minutes": {
+      "type": "number"
+    },
+    "requires_fenced_yard": {
+      "type": "boolean",
+      "default": false
+    },
+    "pets_allowed": {
+      "type": "boolean",
+      "default": false
+    },
+    "parking_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "furnished_allowed_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    },
+    "coach_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "bedrooms",
+    "bathrooms"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.coach_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -9,19 +9,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Shield, Users, FileText, BarChart3, ScrollText, Save } from "lucide-react";
+import { Shield, Users, FileText, BarChart3, ScrollText, Save, RefreshCw } from "lucide-react";
+import { seedContent } from "@/functions/seedContent";
 
 export default function AdminPanel() {
   const [tab, setTab] = useState("users");
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-brand flex items-center justify-center"><Shield className="w-6 h-6 text-white" /></div>
-        <div>
-          <h1 className="text-2xl font-bold text-brand">Admin Panel</h1>
-          <p className="text-slate-500 text-sm">Manage users, roles, cohorts, curriculum, and view analytics & audit log.</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-brand flex items-center justify-center"><Shield className="w-6 h-6 text-white" /></div>
+          <div>
+            <h1 className="text-2xl font-bold text-brand">Admin Panel</h1>
+            <p className="text-slate-500 text-sm">Manage users, roles, cohorts, curriculum, and view analytics & audit log.</p>
+          </div>
         </div>
+        <SeedButton />
       </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex flex-wrap h-auto">
@@ -266,6 +270,32 @@ function AuditTab() {
         ))}
       </CardContent>
     </Card>
+  );
+}
+
+function SeedButton() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const [err, setErr] = useState("");
+  const run = async () => {
+    setBusy(true); setErr(""); setResult(null);
+    try {
+      const res = await seedContent({});
+      setResult(res.data || res);
+    } catch (e) {
+      setErr(e.message || "Failed to seed");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <Button variant="outline" className="border-brand text-brand" onClick={run} disabled={busy}>
+        <RefreshCw className={`w-4 h-4 mr-1 ${busy ? "animate-spin" : ""}`} /> {busy ? "Seeding…" : "Re-seed content"}
+      </Button>
+      {result && <span className="text-xs text-slate-500">Seeded {result.seededDays} days & {result.seededTemplates} templates — now {result.days} days, {result.templates} templates total.</span>}
+      {err && <span className="text-xs text-destructive">{err}</span>}
+    </div>
   );
 }
 
