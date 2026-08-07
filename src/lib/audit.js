@@ -1,18 +1,18 @@
-import { base44 } from "@/api/base44Client";
+import { writeAudit } from "@/functions/writeAudit";
 
-// Append-only audit logging from the app. Sign-ins are logged by the
-// Sign-In Audit workflow; role changes and admin record access are logged here.
+// Append-only audit logging from the app. The browser never creates an
+// AuditLog record directly — it asks the writeAudit backend function to,
+// which derives actor identity and timestamp from the authenticated
+// session. Sign-ins are still logged by the Sign-In Audit workflow via
+// the logSignIn service-role function.
 export async function logAudit(action, details, targetUserEmail) {
   try {
-    const user = await base44.auth.me();
-    await base44.entities.AuditLog.create({
+    await writeAudit({
       action,
       details: details || "",
-      target_user_email: targetUserEmail || "",
-      actor_email: user?.email || "",
-      actor_role: user?.role || ""
+      target_user_email: targetUserEmail || ""
     });
-  } catch (e) {
+  } catch {
     // Audit logging must never break the host's workflow.
   }
 }
