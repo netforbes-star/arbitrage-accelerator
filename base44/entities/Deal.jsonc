@@ -165,7 +165,8 @@
       "default": "evaluating"
     },
     "coach_id": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 64
     }
   },
   "required": [

@@ -4,7 +4,8 @@
   "properties": {
     "host_id": {
       "type": "string",
-      "description": "The host being reviewed"
+      "description": "The host being reviewed",
+      "maxLength": 64
     },
     "host_name": {
       "type": "string",

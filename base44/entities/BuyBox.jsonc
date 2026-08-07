@@ -41,7 +41,8 @@
       "maxLength": 2000
     },
     "coach_id": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 64
     }
   },
   "required": [

@@ -4,7 +4,8 @@
   "properties": {
     "portfolio_size": {
       "type": "string",
-      "description": "Current number of properties in the host's portfolio"
+      "description": "Current number of properties in the host's portfolio",
+      "maxLength": 100
     },
     "target_market_city": {
       "type": "string",
@@ -45,7 +46,8 @@
     },
     "coach_id": {
       "type": "string",
-      "description": "Assigned coach user id"
+      "description": "Assigned coach user id",
+      "maxLength": 64
     },
     "terms_accepted_at": {
       "type": "string",
