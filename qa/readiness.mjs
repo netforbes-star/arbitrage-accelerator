@@ -135,6 +135,12 @@ for (const name of HOST_OWNED) {
   chk(/asServiceRole\.entities\.Deal\.update/.test(fn), 'B2 updates run with service role, past the sealed RLS');
   chk(/entities\.Deal\.create/.test(fn) && !/asServiceRole\.entities\.Deal\.create/.test(fn),
     'B2 creates run user-scoped so ownership lands on the real host');
+  chk(/toStatus === "passed" && fromStatus === "lease signed"/.test(fn),
+    'B2 "passed" means the host declined, reachable pre-signature');
+  chk(!/toStatus === "passed" && fromStatus !== "lease signed"/.test(fn),
+    'B2 declining a failed deal is not blocked by an inverted rule');
+  chk(/INITIAL_STATUSES/.test(fn), 'B2 new deals cannot start in a protected stage');
+  chk(/delete payload\.created_by_id/.test(fn), 'B2 client cannot forge ownership on save');
   const page = read(at('src/pages/DealAnalyzer.jsx'));
   chk(/saveDeal\(/.test(page), 'B2 client saves through the backend function');
   chk(!/entities\.Deal\.(create|update)/.test(page), 'B2 client never writes the Deal entity directly');
