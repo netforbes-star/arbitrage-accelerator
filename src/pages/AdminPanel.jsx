@@ -71,10 +71,7 @@ function UsersTab() {
     const newRole = patch.role || oldRole;
     const cohort = patch.cohort !== undefined ? patch.cohort : u.cohort;
     await base44.entities.User.update(u.id, { role: newRole, cohort });
-    if (patch.coachAssign) {
-      const prof = profileFor(u.id);
-      if (prof) await base44.entities.OnboardingProfile.update(prof.id, { coach_id: patch.coachAssign });
-    }
+    // No coach assignment: there is one coach, and staff see every host.
     if (newRole !== oldRole) logAudit("role_change", `Changed ${u.email} role from ${oldRole} to ${newRole}`, u.email);
     setEdits((e) => ({ ...e, [u.id]: {} }));
     load();
@@ -112,13 +109,6 @@ function UsersTab() {
                 <div>
                   <Label className="text-xs text-brand-mutedtext">Cohort</Label>
                   <Input className="h-8 text-xs" value={e.cohort !== undefined ? e.cohort : (u.cohort || "")} onChange={(ev) => setField(u.id, "cohort", ev.target.value)} />
-                </div>
-                <div>
-                  <Label className="text-xs text-brand-mutedtext">Assign coach</Label>
-                  <Select value={e.coachAssign || prof?.coach_id || ""} onValueChange={(v) => setField(u.id, "coachAssign", v)}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent><SelectItem value={null}>— None —</SelectItem>{coaches.map((c) => <SelectItem key={c.id} value={c.id}>{c.email}</SelectItem>)}</SelectContent>
-                  </Select>
                 </div>
               </div>
               <Button size="sm" className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90 mt-2" onClick={() => saveUser(u)}><Save className="w-3 h-3 mr-1" /> Save</Button>
