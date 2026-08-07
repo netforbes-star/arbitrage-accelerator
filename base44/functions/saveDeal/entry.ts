@@ -65,8 +65,12 @@ export default async function (req) {
           return reject(400, "We can't mark this deal as lease signed yet. Add the required permission documentation and try again.");
         }
       }
-      if (toStatus === "passed" && fromStatus !== "lease signed") {
-        return reject(400, "A deal can only be marked as passed after the lease is signed.");
+      // "passed" means the HOST passed on the deal — they walked away. It is a
+      // pre-signature outcome, reachable from any stage before a lease exists,
+      // and it is the normal ending for a deal that fails underwriting. The
+      // only thing that makes no sense is passing on a deal already signed.
+      if (toStatus === "passed" && fromStatus === "lease signed") {
+        return reject(400, "This lease is already signed, so it can't be marked as passed. Mark it lost if the deal fell through.");
       }
     }
 
