@@ -16,7 +16,7 @@ export default function Graduation() {
       setData({ deals, landlords, logs });
     })();
   }, []);
-  if (!data) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" /></div>;
+  if (!data) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
 
   const contacted = data.landlords.filter((l) => l.stage !== "not contacted").length;
   const conversations = data.landlords.filter((l) => ["conversation held", "property viewed", "negotiating", "won"].includes(l.stage)).length;
@@ -37,9 +37,9 @@ export default function Graduation() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="text-center py-4">
-        <div className="w-16 h-16 rounded-2xl bg-brand-gold flex items-center justify-center mx-auto mb-3"><Trophy className="w-8 h-8 text-white" /></div>
-        <h1 className="text-2xl font-bold text-brand">Graduation — Day 28</h1>
-        <p className="text-slate-500 text-sm">Your 28-day results, and a diagnosis from your own funnel data.</p>
+        <div className="w-16 h-16 rounded-2xl bg-brand-gold flex items-center justify-center mx-auto mb-3"><Trophy className="w-8 h-8 text-brand-ink" /></div>
+        <h1 className="text-2xl font-bold text-brand-text">Graduation — Day 28</h1>
+        <p className="text-brand-mutedtext text-sm">Your 28-day results, and a diagnosis from your own funnel data.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -49,28 +49,28 @@ export default function Graduation() {
         <Result icon={Handshake} value={signed} label="Deals signed" goal="1+" />
       </div>
 
-      <Card className="border-brand-gold/40 bg-brand-gold/5">
-        <CardHeader><CardTitle className="text-brand flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Projected monthly profit</CardTitle></CardHeader>
-        <CardContent><div className="text-3xl font-extrabold text-brand">${projected}/mo</div><div className="text-xs text-slate-500">from {data.deals.filter((d) => d.verdict === "PASS").length} passing deal(s)</div></CardContent>
+      <Card className="border-brand-gold/40 bg-brand-gold/10">
+        <CardHeader><CardTitle className="text-brand-text flex items-center gap-2"><TrendingUp className="w-5 h-5 text-brand-gold" /> Projected monthly profit</CardTitle></CardHeader>
+        <CardContent><div className="text-3xl font-extrabold text-brand-gold">${projected}/mo</div><div className="text-xs text-brand-mutedtext">from {data.deals.filter((d) => d.verdict === "PASS").length} passing deal(s)</div></CardContent>
       </Card>
 
-      <Card className="border-slate-200">
-        <CardHeader><CardTitle className="text-brand">Your diagnosis</CardTitle></CardHeader>
-        <CardContent><p className="text-sm text-slate-700 leading-relaxed">{diagnosis}</p></CardContent>
+      <Card className="border-brand-line">
+        <CardHeader><CardTitle className="text-brand-text">Your diagnosis</CardTitle></CardHeader>
+        <CardContent><p className="text-sm text-brand-mutedtext leading-relaxed">{diagnosis}</p></CardContent>
       </Card>
 
       {signed === 0 && (
-        <div className="text-center text-sm text-slate-500 bg-slate-50 rounded-lg p-4">
+        <div className="text-center text-sm text-brand-mutedtext bg-brand-raised rounded-lg p-4 border border-brand-line">
           A deal you didn't sign isn't a failure — it's data. The number that has to change is right above. Adjust and run the sprint again.
         </div>
       )}
-      <Button variant="outline" className="w-full border-brand text-brand" onClick={() => window.history.back()}>Back to dashboard</Button>
+      <Button variant="outline" className="w-full border-brand-line text-brand-text" onClick={() => window.history.back()}>Back to dashboard</Button>
     </div>
   );
 }
 
 function Result({ icon: Icon, value, label, goal }) {
   return (
-    <Card className="border-slate-200"><CardContent className="py-4 text-center"><Icon className="w-5 h-5 text-brand mx-auto mb-1" /><div className="text-2xl font-bold text-brand">{value}</div><div className="text-xs text-slate-400">goal {goal}</div><div className="text-xs text-slate-500 mt-0.5">{label}</div></CardContent></Card>
+    <Card className="border-brand-line"><CardContent className="py-4 text-center"><Icon className="w-5 h-5 text-brand-gold mx-auto mb-1" /><div className="text-2xl font-bold text-brand-text">{value}</div><div className="text-xs text-brand-mutedtext">goal {goal}</div><div className="text-xs text-brand-mutedtext mt-0.5">{label}</div></CardContent></Card>
   );
 }

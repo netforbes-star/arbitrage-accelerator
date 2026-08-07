@@ -6,6 +6,15 @@ import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
 import { FileText, Search } from "lucide-react";
 
+const mdComponents = {
+  h1: ({ children }) => <h1 className="text-lg font-semibold text-brand-text mt-4 mb-2">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-base font-semibold text-brand-text mt-4 mb-2">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-sm font-semibold text-brand-text mt-3 mb-1">{children}</h3>,
+  p: ({ children }) => <p className="text-sm text-brand-mutedtext leading-relaxed mb-2">{children}</p>,
+  li: ({ children }) => <li className="text-sm text-brand-mutedtext leading-relaxed">{children}</li>,
+  strong: ({ children }) => <strong className="text-brand-text font-semibold">{children}</strong>
+};
+
 export default function TemplateVault() {
   const { profile } = useHostProfile();
   const [templates, setTemplates] = useState([]);
@@ -22,7 +31,7 @@ export default function TemplateVault() {
     })();
   }, []);
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
 
   const fill = (content) => {
     if (!content) return "";
@@ -39,38 +48,38 @@ export default function TemplateVault() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand flex items-center gap-2"><FileText className="w-6 h-6" /> Template Vault</h1>
-        <p className="text-slate-500 text-sm">Read-only templates that fill in your market, property, and name. Admins can edit these.</p>
+        <h1 className="text-2xl font-bold text-brand-text flex items-center gap-2"><FileText className="w-6 h-6 text-brand-gold" /> Template Vault</h1>
+        <p className="text-brand-mutedtext text-sm">Read-only templates that fill in your market, property, and name. Admins can edit these.</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="space-y-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-mutedtext" />
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search templates…" className="pl-9" />
           </div>
           {filtered.map((t) => (
-            <button key={t.id} onClick={() => setActive(t)} className={`w-full text-left p-3 rounded-lg border ${active?.id === t.id ? "border-brand bg-brand/5" : "border-slate-200 hover:bg-slate-50"}`}>
-              <div className="text-sm font-medium text-slate-800">{t.title}</div>
-              <div className="text-xs text-slate-400">{t.category}</div>
+            <button key={t.id} onClick={() => setActive(t)} className={`w-full text-left p-3 rounded-lg border ${active?.id === t.id ? "border-brand-gold bg-brand-gold/10" : "border-brand-line bg-brand-surface hover:bg-brand-raised"}`}>
+              <div className="text-sm font-medium text-brand-text">{t.title}</div>
+              <div className="text-xs text-brand-mutedtext">{t.category}</div>
             </button>
           ))}
         </div>
 
-        <Card className="lg:col-span-2 border-slate-200">
+        <Card className="lg:col-span-2 border-brand-line">
           <CardContent className="py-5">
             {active ? (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-brand">{active.title}</h2>
-                  <span className="text-xs text-slate-400">{active.category}</span>
+                  <h2 className="text-lg font-semibold text-brand-text">{active.title}</h2>
+                  <span className="text-xs text-brand-mutedtext">{active.category}</span>
                 </div>
-                <div className="prose prose-sm max-w-none text-slate-700">
-                  <ReactMarkdown>{fill(active.content)}</ReactMarkdown>
+                <div className="max-w-none">
+                  <ReactMarkdown components={mdComponents}>{fill(active.content)}</ReactMarkdown>
                 </div>
-                {active.variables && <p className="text-xs text-slate-400 mt-4 border-t border-slate-100 pt-3">Variables: {active.variables}</p>}
+                {active.variables && <p className="text-xs text-brand-mutedtext mt-4 border-t border-brand-line pt-3">Variables: {active.variables}</p>}
               </>
-            ) : <p className="text-sm text-slate-400">Select a template.</p>}
+            ) : <p className="text-sm text-brand-mutedtext">Select a template.</p>}
           </CardContent>
         </Card>
       </div>

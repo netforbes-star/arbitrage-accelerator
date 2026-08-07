@@ -41,7 +41,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" />
       </div>
     );
   }
@@ -85,33 +85,33 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand">
+          <h1 className="text-2xl font-bold text-brand-text">
             {profile?.target_market_city ? `Hello — let's win ${profile.target_market_city}` : "Your dashboard"}
           </h1>
-          <p className="text-slate-500 text-sm">Day {currentDay} of 28 · {remaining} days remaining · Week {weekNum}: {WEEK_THEMES[weekNum]}</p>
+          <p className="text-brand-mutedtext text-sm">Day {currentDay} of 28 · {remaining} days remaining · Week {weekNum}: {WEEK_THEMES[weekNum]}</p>
         </div>
-        <Link to="/program"><Button variant="outline" className="border-brand text-brand">Open program <ArrowRight className="w-4 h-4 ml-1" /></Button></Link>
+        <Link to="/program"><Button variant="outline" className="border-brand-line text-brand-text">Open program <ArrowRight className="w-4 h-4 ml-1" /></Button></Link>
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4">
-        <Card className="border-slate-200">
+        <Card className="border-brand-line">
           <CardContent className="flex items-center gap-4 py-5">
             <ProgressRing value={programPct} />
             <div>
-              <div className="text-sm text-slate-500">Program progress</div>
-              <div className="text-2xl font-bold text-brand">{completedTasks}/{totalTasks}</div>
-              <div className="text-xs text-slate-400">tasks complete</div>
+              <div className="text-sm text-brand-mutedtext">Program progress</div>
+              <div className="text-2xl font-bold text-brand-text">{completedTasks}/{totalTasks}</div>
+              <div className="text-xs text-brand-mutedtext">tasks complete</div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-200 sm:col-span-2">
+        <Card className="border-brand-line sm:col-span-2">
           <CardContent className="py-5">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-medium text-slate-700">Week {weekNum} progress</div>
-              <div className="text-sm text-slate-500">{weekDone}/{weekTasks}</div>
+              <div className="text-sm font-medium text-brand-text">Week {weekNum} progress</div>
+              <div className="text-sm text-brand-mutedtext">{weekDone}/{weekTasks}</div>
             </div>
             <Progress value={weekPct} className="h-3 [&>div]:bg-brand-gold" />
-            <div className="text-xs text-slate-400 mt-2">{WEEK_THEMES[weekNum]}</div>
+            <div className="text-xs text-brand-mutedtext mt-2">{WEEK_THEMES[weekNum]}</div>
           </CardContent>
         </Card>
       </div>
@@ -124,24 +124,24 @@ export default function Dashboard() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 border-slate-200">
+        <Card className="lg:col-span-2 border-brand-line">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-brand text-lg">Today's focus</CardTitle>
-              {todayDay?.gate && <Badge className="bg-brand-gold text-white">Gate day</Badge>}
+              <CardTitle className="text-brand-text text-lg">Today's focus</CardTitle>
+              {todayDay?.gate && <Badge className="bg-brand-gold text-brand-ink">Gate day</Badge>}
             </div>
-            {todayDay && <p className="text-xs text-slate-500">{dayDate(start, currentDay)} · {todayDay.title}</p>}
+            {todayDay && <p className="text-xs text-brand-mutedtext">{dayDate(start, currentDay)} · {todayDay.title}</p>}
           </CardHeader>
           <CardContent className="space-y-2">
-            {todayTasks.length === 0 && <p className="text-sm text-slate-400 py-4">All caught up — nice work today.</p>}
+            {todayTasks.length === 0 && <p className="text-sm text-brand-mutedtext py-4">All caught up — nice work today.</p>}
             {todayTasks.map((t, i) => {
               const st = progMap[`${currentDay}-${i}`]?.status;
               return (
-                <Link key={i} to="/program" className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 border border-slate-100">
-                  {st === "complete" ? <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" /> : <Clock className="w-5 h-5 text-slate-300 mt-0.5" />}
+                <Link key={i} to="/program" className="flex items-start gap-3 p-3 rounded-lg hover:bg-brand-raised border border-brand-line">
+                  {st === "complete" ? <CheckCircle2 className="w-5 h-5 text-green-400 mt-0.5" /> : <Clock className="w-5 h-5 text-brand-mutedtext mt-0.5" />}
                   <div className="flex-1">
-                    <div className={`text-sm font-medium ${st === "complete" ? "line-through text-slate-400" : "text-slate-800"}`}>{t.title}</div>
-                    <div className="text-xs text-slate-400">{t.time_estimate} · {t.completion_condition}</div>
+                    <div className={`text-sm font-medium ${st === "complete" ? "line-through text-brand-mutedtext" : "text-brand-text"}`}>{t.title}</div>
+                    <div className="text-xs text-brand-mutedtext">{t.time_estimate} · {t.completion_condition}</div>
                   </div>
                 </Link>
               );
@@ -150,27 +150,27 @@ export default function Dashboard() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="border-brand-gold/40 bg-brand-gold/5">
+          <Card className="border-brand-gold/40 bg-brand-gold/10">
             <CardContent className="py-5">
               <div className="flex items-center gap-2 mb-1">
                 <ArrowRight className="w-4 h-4 text-brand-gold" />
                 <div className="text-xs uppercase tracking-wide text-brand-gold font-semibold">Next best action</div>
               </div>
-              <div className="text-sm font-medium text-slate-800">{nextBest}</div>
+              <div className="text-sm font-medium text-brand-text">{nextBest}</div>
             </CardContent>
           </Card>
 
           {behind && (
-            <Card className="border-slate-200">
+            <Card className="border-brand-line">
               <CardContent className="py-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <LifeBuoy className="w-4 h-4 text-brand" />
-                  <div className="text-sm font-semibold text-brand">Recalibrate</div>
+                  <LifeBuoy className="w-4 h-4 text-brand-gold" />
+                  <div className="text-sm font-semibold text-brand-text">Recalibrate</div>
                 </div>
-                <p className="text-xs text-slate-500 mb-3">You're a touch behind pace. That's okay — here are warm options:</p>
+                <p className="text-xs text-brand-mutedtext mb-3">You're a touch behind pace. That's okay — here are warm options:</p>
                 <div className="space-y-2 text-xs">
-                  <Link to="/program" className="block w-full text-left p-2 rounded border border-slate-200 hover:bg-slate-50 text-slate-700">Drop a non-gate task</Link>
-                  <Link to="/coach" className="block w-full text-left p-2 rounded border border-slate-200 hover:bg-slate-50 text-slate-700">Book a coaching call</Link>
+                  <Link to="/program" className="block w-full text-left p-2 rounded border border-brand-line hover:bg-brand-raised text-brand-text">Drop a non-gate task</Link>
+                  <Link to="/coach" className="block w-full text-left p-2 rounded border border-brand-line hover:bg-brand-raised text-brand-text">Book a coaching call</Link>
                 </div>
               </CardContent>
             </Card>
@@ -183,12 +183,12 @@ export default function Dashboard() {
 
 function Metric({ icon: Icon, value, goal, label }) {
   return (
-    <Card className="border-slate-200">
+    <Card className="border-brand-line">
       <CardContent className="py-4">
-        <Icon className="w-5 h-5 text-brand mb-2" />
-        <div className="text-2xl font-bold text-brand">{value}</div>
-        <div className="text-xs text-slate-400">goal {goal}</div>
-        <div className="text-xs text-slate-500 mt-1">{label}</div>
+        <Icon className="w-5 h-5 text-brand-gold mb-2" />
+        <div className="text-2xl font-bold text-brand-text">{value}</div>
+        <div className="text-xs text-brand-mutedtext">goal {goal}</div>
+        <div className="text-xs text-brand-mutedtext mt-1">{label}</div>
       </CardContent>
     </Card>
   );

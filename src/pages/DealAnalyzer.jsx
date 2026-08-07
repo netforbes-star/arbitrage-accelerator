@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Calculator, CheckCircle2, XCircle, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Calculator, Plus, CheckCircle2, XCircle, Pencil, Trash2, AlertTriangle } from "lucide-react";
 
 const EMPTY = {
   nickname: "", beds: 2, baths: 1, monthly_rent: "", utilities: "", furnishing_cost: "",
@@ -88,19 +88,19 @@ export default function DealAnalyzer() {
   };
   const remove = async (id) => { await base44.entities.Deal.delete(id); load(); };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
   const pass = result.verdict === "PASS";
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand flex items-center gap-2"><Calculator className="w-6 h-6" /> Deal Analyzer</h1>
-        <p className="text-slate-500 text-sm">Two revenue modes. PASS/FAIL is tested against <strong>cash profit</strong> at the $500/mo floor. True profit shows what's left after paying yourself for your time.</p>
+        <h1 className="text-2xl font-bold text-brand-text flex items-center gap-2"><Calculator className="w-6 h-6 text-brand-gold" /> Deal Analyzer</h1>
+        <p className="text-brand-mutedtext text-sm">Two revenue modes. PASS/FAIL is tested against <strong className="text-brand-text">cash profit</strong> at the $500/mo floor. True profit shows what's left after paying yourself for your time.</p>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-6">
-        <Card className="lg:col-span-3 border-slate-200">
-          <CardHeader><CardTitle className="text-brand">{editingId ? "Edit deal" : "New deal"}</CardTitle></CardHeader>
+        <Card className="lg:col-span-3 border-brand-line">
+          <CardHeader><CardTitle className="text-brand-text">{editingId ? "Edit deal" : "New deal"}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-3 gap-3">
               <Field label="Address / nickname"><Input value={form.nickname} onChange={(e) => set("nickname", e.target.value)} placeholder="123 Main St" /></Field>
@@ -108,16 +108,16 @@ export default function DealAnalyzer() {
               <Field label="Baths"><Input type="number" value={form.baths} onChange={(e) => set("baths", e.target.value)} /></Field>
             </div>
 
-            <div className="border border-slate-200 rounded-lg p-3 space-y-3">
-              <div className="text-sm font-medium text-slate-700">Revenue mode</div>
+            <div className="border border-brand-line rounded-lg p-3 space-y-3 bg-brand-raised">
+              <div className="text-sm font-medium text-brand-text">Revenue mode</div>
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => set("revenue_mode", "nightly")} className={`p-2.5 rounded-lg border text-left ${!monthly ? "border-brand bg-brand/5" : "border-slate-200"}`}>
-                  <div className="text-sm font-medium text-slate-800">A · Nightly rate from comps</div>
-                  <div className="text-xs text-slate-400">ADR × occupancy × 30</div>
+                <button type="button" onClick={() => set("revenue_mode", "nightly")} className={`p-2.5 rounded-lg border text-left ${!monthly ? "border-brand-gold bg-brand-gold/10" : "border-brand-line bg-brand-surface"}`}>
+                  <div className="text-sm font-medium text-brand-text">A · Nightly rate from comps</div>
+                  <div className="text-xs text-brand-mutedtext">ADR × occupancy × 30</div>
                 </button>
-                <button type="button" onClick={() => set("revenue_mode", "monthly")} className={`p-2.5 rounded-lg border text-left ${monthly ? "border-brand bg-brand/5" : "border-slate-200"}`}>
-                  <div className="text-sm font-medium text-slate-800">B · Monthly revenue (AirDNA/PriceLabs)</div>
-                  <div className="text-xs text-slate-400">Used directly, 15% haircut</div>
+                <button type="button" onClick={() => set("revenue_mode", "monthly")} className={`p-2.5 rounded-lg border text-left ${monthly ? "border-brand-gold bg-brand-gold/10" : "border-brand-line bg-brand-surface"}`}>
+                  <div className="text-sm font-medium text-brand-text">B · Monthly revenue (AirDNA/PriceLabs)</div>
+                  <div className="text-xs text-brand-mutedtext">Used directly, 15% haircut</div>
                 </button>
               </div>
               {!monthly ? (
@@ -152,7 +152,7 @@ export default function DealAnalyzer() {
               <Field label="MTR revenue est. ($/mo)"><Input type="number" value={form.mtr_revenue_estimate} onChange={(e) => set("mtr_revenue_estimate", e.target.value)} /></Field>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+            <div className="grid sm:grid-cols-2 gap-3 border-t border-brand-line pt-3">
               <Field label="Written permission type">
                 <Select value={form.permission_type} onValueChange={(v) => set("permission_type", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -166,7 +166,7 @@ export default function DealAnalyzer() {
               </Field>
               <Field label="Evidence URL"><Input value={form.permission_artifact_url} onChange={(e) => set("permission_artifact_url", e.target.value)} placeholder="https://..." /></Field>
             </div>
-            {form.permission_type === "verbal" && <p className="text-xs text-amber-600">Verbal permission is not permission — a change in property management ends it. Get it in writing before marking lease signed.</p>}
+            {form.permission_type === "verbal" && <p className="text-xs text-amber-400">Verbal permission is not permission — a change in property management ends it. Get it in writing before marking lease signed.</p>}
 
             <Field label="Deal status">
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
@@ -175,32 +175,32 @@ export default function DealAnalyzer() {
               </Select>
             </Field>
 
-            {error && <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
+            {error && <div className="p-3 rounded-lg bg-red-500/10 text-red-400 text-sm">{error}</div>}
             <div className="flex gap-2">
-              <Button onClick={save} disabled={saving} className="bg-brand hover:bg-brand-bright flex-1">{saving ? "Saving…" : editingId ? "Update deal" : "Save deal"}</Button>
-              {editingId && <Button variant="outline" onClick={reset}>Cancel</Button>}
+              <Button onClick={save} disabled={saving} className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90 flex-1">{saving ? "Saving…" : editingId ? "Update deal" : "Save deal"}</Button>
+              {editingId && <Button variant="outline" className="border-brand-line text-brand-text" onClick={reset}>Cancel</Button>}
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`lg:col-span-2 ${pass ? "border-green-500/40" : "border-amber-500/40"}`}>
+        <Card className={`lg:col-span-2 ${pass ? "border-green-500/40 bg-green-500/10" : "border-red-500/40 bg-red-500/10"}`}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-brand">Verdict</CardTitle>
-              {pass ? <CheckCircle2 className="w-7 h-7 text-green-600" /> : <XCircle className="w-7 h-7 text-amber-500" />}
+              <CardTitle className="text-brand-text">Verdict</CardTitle>
+              {pass ? <CheckCircle2 className="w-7 h-7 text-green-400" /> : <XCircle className="w-7 h-7 text-red-400" />}
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className={`text-3xl font-extrabold ${pass ? "text-green-600" : "text-amber-500"}`}>{pass ? "PURSUE THIS DEAL" : "FAIL"}</div>
-            <div className="text-sm text-slate-500">Recommended strategy: <span className="font-medium text-slate-700">{result.recommended}</span></div>
+            <div className={`text-3xl font-extrabold ${pass ? "text-green-400" : "text-red-400"}`}>{pass ? "PURSUE THIS DEAL" : "FAIL"}</div>
+            <div className="text-sm text-brand-mutedtext">Recommended strategy: <span className="font-medium text-brand-text">{result.recommended}</span></div>
 
-            <div className="border-t border-slate-100 pt-2 space-y-1.5">
-              <div className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Revenue</div>
+            <div className="border-t border-brand-line pt-2 space-y-1.5">
+              <div className="text-xs uppercase tracking-wide text-brand-mutedtext font-semibold">Revenue</div>
               <Row label={`Gross revenue (${monthly ? "after haircut" : "ADR × occ × 30"})`} value={`$${Math.round(result.grossRevenue)}/mo`} />
               {monthly && <Row label={`− ${Math.round(result.haircut * 100)}% conservatism haircut`} value={`−$${Math.round(result.haircutAmount)}/mo`} muted />}
             </div>
-            <div className="border-t border-slate-100 pt-2 space-y-1.5">
-              <div className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Costs</div>
+            <div className="border-t border-brand-line pt-2 space-y-1.5">
+              <div className="text-xs uppercase tracking-wide text-brand-mutedtext font-semibold">Costs</div>
               <Row label="− Variable costs (30% cleaning/supplies/fees)" value={`−$${Math.round(result.variableCosts)}/mo`} muted />
               <Row label="− Furniture reserve (5%)" value={`−$${Math.round(result.furnitureReserve)}/mo`} muted />
               <Row label="− Rent" value={`−$${Math.round(Number(form.monthly_rent) || 0)}/mo`} muted />
@@ -210,49 +210,49 @@ export default function DealAnalyzer() {
 
             <div className="border-t-2 border-brand-gold/40 pt-2">
               <Row label="= CASH PROFIT (verdict basis)" value={`$${Math.round(result.cashProfit)}/mo`} bold />
-              <div className="text-xs text-slate-400">tested against the $500/mo floor</div>
+              <div className="text-xs text-brand-mutedtext">tested against the $500/mo floor</div>
             </div>
-            <div className="border-t border-slate-100 pt-2">
+            <div className="border-t border-brand-line pt-2">
               <Row label="− Your time ($20/hr × 5hr/wk)" value={`−$${Math.round(result.managementValue)}/mo`} muted />
-              <div className="border-t border-slate-100 pt-1.5 mt-1.5">
+              <div className="border-t border-brand-line pt-1.5 mt-1.5">
                 <Row label="= TRUE PROFIT (after paying yourself)" value={`$${Math.round(result.trueProfit)}/mo`} bold />
               </div>
             </div>
 
-            <div className="flex justify-between text-sm pt-1"><span className="text-slate-500">Margin</span><span className="font-medium text-slate-700">{Math.round(result.margin)}%</span></div>
-            {result.monthsToRecoup && <div className="flex justify-between text-sm"><span className="text-slate-500">Months to recoup furnishing</span><span className="font-medium text-slate-700">{result.monthsToRecoup.toFixed(1)}</span></div>}
-            <div className="flex justify-between text-sm"><span className="text-slate-500">MTR profit (comparison)</span><span className="font-medium text-slate-700">${Math.round(result.mtrProfit)}/mo</span></div>
+            <div className="flex justify-between text-sm pt-1"><span className="text-brand-mutedtext">Margin</span><span className="font-medium text-brand-text">{Math.round(result.margin)}%</span></div>
+            {result.monthsToRecoup && <div className="flex justify-between text-sm"><span className="text-brand-mutedtext">Months to recoup furnishing</span><span className="font-medium text-brand-text">{result.monthsToRecoup.toFixed(1)}</span></div>}
+            <div className="flex justify-between text-sm"><span className="text-brand-mutedtext">MTR profit (comparison)</span><span className="font-medium text-brand-text">${Math.round(result.mtrProfit)}/mo</span></div>
 
             {result.timeWarning && (
-              <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 p-2.5 rounded-lg mt-2">
+              <div className="flex items-start gap-2 text-sm text-amber-400 bg-amber-500/10 p-2.5 rounded-lg mt-2">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>Cash profit passes, but true profit is negative. This deal only works if your time is free — consider a property manager or a tighter operation.</span>
               </div>
             )}
-            {!pass && <p className="text-sm text-slate-600 bg-amber-50 p-3 rounded-lg whitespace-pre-line mt-2">{result.failFix}</p>}
+            {!pass && <p className="text-sm text-brand-mutedtext bg-red-500/10 text-red-400 p-3 rounded-lg whitespace-pre-line mt-2">{result.failFix}</p>}
           </CardContent>
         </Card>
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-brand">Saved deals ({deals.length})</h2>
-        {deals.length === 0 && <p className="text-sm text-slate-400">No deals yet. Run your first property above.</p>}
+        <h2 className="text-lg font-semibold text-brand-text">Saved deals ({deals.length})</h2>
+        {deals.length === 0 && <p className="text-sm text-brand-mutedtext">No deals yet. Run your first property above.</p>}
         <div className="space-y-2">
           {deals.map((d) => (
-            <Card key={d.id} className="border-slate-200">
+            <Card key={d.id} className="border-brand-line">
               <CardContent className="flex items-center justify-between py-4 gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-slate-800 truncate">{d.nickname}</span>
-                    <Badge variant="outline" className="text-xs">{d.beds}BR/{d.baths}BA</Badge>
-                    <Badge className={d.verdict === "PASS" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}>{d.verdict}</Badge>
-                    <Badge variant="secondary" className="text-xs">{d.status}</Badge>
+                    <span className="font-medium text-brand-text truncate">{d.nickname}</span>
+                    <Badge variant="outline" className="text-xs border-brand-line text-brand-text">{d.beds}BR/{d.baths}BA</Badge>
+                    <Badge className={d.verdict === "PASS" ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}>{d.verdict}</Badge>
+                    <Badge variant="secondary" className="text-xs bg-brand-raised text-brand-mutedtext">{d.status}</Badge>
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">{d.recommended_strategy} · cash ${d.cash_profit}/mo · true ${d.true_profit}/mo</div>
+                  <div className="text-xs text-brand-mutedtext mt-0.5">{d.recommended_strategy} · cash ${d.cash_profit}/mo · true ${d.true_profit}/mo</div>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => edit(d)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => remove(d.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => edit(d)} className="text-brand-mutedtext hover:text-brand-text"><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => remove(d.id)} className="hover:bg-brand-raised"><Trash2 className="w-4 h-4 text-red-400" /></Button>
                 </div>
               </CardContent>
             </Card>
@@ -264,13 +264,13 @@ export default function DealAnalyzer() {
 }
 
 function Field({ label, children }) {
-  return <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-600">{label}</Label>{children}</div>;
+  return <div className="space-y-1.5"><Label className="text-xs font-medium text-brand-text">{label}</Label>{children}</div>;
 }
 function Row({ label, value, bold, muted }) {
   return (
     <div className="flex justify-between text-sm">
-      <span className={muted ? "text-slate-400" : "text-slate-500"}>{label}</span>
-      <span className={bold ? "font-bold text-brand" : muted ? "font-medium text-slate-500" : "font-medium text-slate-800"}>{value}</span>
+      <span className={muted ? "text-brand-mutedtext" : "text-brand-mutedtext"}>{label}</span>
+      <span className={bold ? "font-bold text-brand-gold" : muted ? "font-medium text-brand-mutedtext" : "font-medium text-brand-text"}>{value}</span>
     </div>
   );
 }

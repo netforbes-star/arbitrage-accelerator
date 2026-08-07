@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useHostProfile } from "@/lib/useHostProfile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,9 +37,9 @@ export default function BuyBoxSection({ coachId }) {
   };
 
   return (
-    <div className="mt-3 border-t border-slate-100 pt-3">
-      <div className="flex items-center gap-2 mb-1"><Home className="w-4 h-4 text-brand" /><h4 className="font-semibold text-brand text-sm">Your buy box</h4></div>
-      <p className="text-xs text-slate-500 mb-3">A 2BR/1BA rents about <strong>40% better</strong> than a 1BR/1BA at the same price point. A property 5 minutes from your portfolio is worth about <strong>twice</strong> one 30 minutes away. Lock these in so you can underwrite in seconds.</p>
+    <div className="mt-3 border-t border-brand-line pt-3">
+      <div className="flex items-center gap-2 mb-1"><Home className="w-4 h-4 text-brand-gold" /><h4 className="font-semibold text-brand-text text-sm">Your buy box</h4></div>
+      <p className="text-xs text-brand-mutedtext mb-3">A 2BR/1BA rents about <strong className="text-brand-text">40% better</strong> than a 1BR/1BA at the same price point. A property 5 minutes from your portfolio is worth about <strong className="text-brand-text">twice</strong> one 30 minutes away. Lock these in so you can underwrite in seconds.</p>
       <div className="grid sm:grid-cols-2 gap-3">
         <Field label="Bedrooms"><Input type="number" value={form.bedrooms} onChange={(e) => set("bedrooms", e.target.value)} /></Field>
         <Field label="Bathrooms"><Input type="number" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} /></Field>
@@ -52,18 +53,18 @@ export default function BuyBoxSection({ coachId }) {
         <Toggle label="Furnished allowed (required)" checked={form.furnished_allowed_required} onChange={(v) => set("furnished_allowed_required", v)} />
       </div>
       <Field label="Notes"><Textarea rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
-      <Button size="sm" className="bg-brand mt-2" onClick={save} disabled={saving}><Save className="w-3 h-3 mr-1" /> {saved ? "Saved" : saving ? "Saving…" : "Save buy box"}</Button>
+      <Button size="sm" className="mt-2 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save} disabled={saving}><Save className="w-3 h-3 mr-1" /> {saved ? "Saved" : saving ? "Saving…" : "Save buy box"}</Button>
     </div>
   );
 }
 
 function Field({ label, children }) {
-  return <div className="space-y-1"><Label className="text-xs font-medium text-slate-600">{label}</Label>{children}</div>;
+  return <div className="space-y-1"><Label className="text-xs font-medium text-brand-text">{label}</Label>{children}</div>;
 }
 function Toggle({ label, checked, onChange }) {
   return (
-    <div className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2">
-      <span className="text-xs text-slate-700">{label}</span>
+    <div className="flex items-center justify-between border border-brand-line rounded-lg px-3 py-2 bg-brand-raised">
+      <span className="text-xs text-brand-text">{label}</span>
       <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );

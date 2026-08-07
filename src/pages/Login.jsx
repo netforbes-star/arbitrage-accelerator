@@ -50,6 +50,9 @@ export default function Login() {
           >
             Create one
           </Link>
+          <div className="mt-3">
+            <Link to="/terms" target="_blank" rel="noreferrer" className="text-primary hover:underline text-sm">Terms &amp; Privacy</Link>
+          </div>
         </>
       }
     >

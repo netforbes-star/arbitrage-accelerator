@@ -16,7 +16,6 @@ const CHANNELS = ["email", "phone", "text", "in-person", "direct mail", "social"
 export default function LandlordCRM() {
   const { coachId } = useHostProfile();
   const [landlords, setLandlords] = useState([]);
-  const [logs, setLogs] = useState([]);
   const [view, setView] = useState("list");
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -25,12 +24,10 @@ export default function LandlordCRM() {
   const [log, setLog] = useState({ channel: "email", template: "", outcome: "" });
 
   const load = async () => {
-    const [ll, ol] = await Promise.all([
-      base44.entities.Landlord.list("-created_date", 300),
-      base44.entities.OutreachLog.list("-created_date", 300)
+    const [ll] = await Promise.all([
+      base44.entities.Landlord.list("-created_date", 300)
     ]);
     setLandlords(ll);
-    setLogs(ol);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -53,25 +50,19 @@ export default function LandlordCRM() {
   const saveLog = async () => {
     const ll = landlords.find((l) => l.id === logFor);
     await base44.entities.OutreachLog.create({
-      landlord_id: logFor,
-      landlord_name: ll?.name || "",
-      channel: log.channel,
-      template: log.template,
-      outcome: log.outcome,
-      date: new Date().toISOString().slice(0, 10),
-      coach_id: coachId
+      landlord_id: logFor, landlord_name: ll?.name || "", channel: log.channel, template: log.template, outcome: log.outcome,
+      date: new Date().toISOString().slice(0, 10), coach_id: coachId
     });
-    // advance stage to contacted if not contacted
     if (ll && ll.stage === "not contacted") await base44.entities.Landlord.update(logFor, { stage: "contacted", last_contact_date: new Date().toISOString().slice(0, 10) });
     setLogFor(null);
     setLog({ channel: "email", template: "", outcome: "" });
     load();
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
 
   const today = new Date().toISOString().slice(0, 10);
-  const sendQueue = landlords.filter((l) => l.stage !== "won" && l.stage !== "lost" && (!l.next_action_date || l.next_action_date <= today) && l.stage !== "not contacted" || (l.stage === "not contacted"));
+  const sendQueue = landlords.filter((l) => l.stage !== "won" && l.stage !== "lost" && (!l.next_action_date || l.next_action_date <= today));
   const contacted = landlords.filter((l) => l.stage !== "not contacted").length;
   const conversations = landlords.filter((l) => ["conversation held", "property viewed", "negotiating", "won"].includes(l.stage)).length;
 
@@ -79,27 +70,27 @@ export default function LandlordCRM() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand flex items-center gap-2"><Users className="w-6 h-6" /> Landlord CRM</h1>
-          <p className="text-slate-500 text-sm">{contacted} contacted · {conversations} conversations this week (goal 10-15) · {landlords.length} total</p>
+          <h1 className="text-2xl font-bold text-brand-text flex items-center gap-2"><Users className="w-6 h-6 text-brand-gold" /> Landlord CRM</h1>
+          <p className="text-brand-mutedtext text-sm">{contacted} contacted · {conversations} conversations this week (goal 10-15) · {landlords.length} total</p>
         </div>
         <div className="flex gap-2">
-          <div className="flex rounded-lg border border-slate-200 p-0.5">
-            <button onClick={() => setView("list")} className={`px-3 py-1.5 rounded-md text-sm flex items-center gap-1 ${view === "list" ? "bg-brand text-white" : "text-slate-600"}`}><List className="w-4 h-4" /> List</button>
-            <button onClick={() => setView("kanban")} className={`px-3 py-1.5 rounded-md text-sm flex items-center gap-1 ${view === "kanban" ? "bg-brand text-white" : "text-slate-600"}`}><LayoutGrid className="w-4 h-4" /> Board</button>
+          <div className="flex rounded-lg border border-brand-line p-0.5 bg-brand-raised">
+            <button onClick={() => setView("list")} className={`px-3 py-1.5 rounded-md text-sm flex items-center gap-1 ${view === "list" ? "bg-brand-gold text-brand-ink" : "text-brand-mutedtext"}`}><List className="w-4 h-4" /> List</button>
+            <button onClick={() => setView("kanban")} className={`px-3 py-1.5 rounded-md text-sm flex items-center gap-1 ${view === "kanban" ? "bg-brand-gold text-brand-ink" : "text-brand-mutedtext"}`}><LayoutGrid className="w-4 h-4" /> Board</button>
           </div>
-          <Button className="bg-brand" onClick={() => setShowAdd(true)}><Plus className="w-4 h-4 mr-1" /> Add</Button>
+          <Button className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={() => setShowAdd(true)}><Plus className="w-4 h-4 mr-1" /> Add</Button>
         </div>
       </div>
 
-      <Card className="border-brand-gold/40 bg-brand-gold/5">
+      <Card className="border-brand-gold/40 bg-brand-gold/10">
         <CardContent className="py-4">
-          <div className="flex items-center gap-2 mb-2"><Send className="w-4 h-4 text-brand-gold" /><span className="text-sm font-semibold text-brand">Daily send queue</span></div>
-          {sendQueue.length === 0 ? <p className="text-sm text-slate-500">You're all caught up on follow-ups. Add new landlords to keep the pipeline warm.</p> : (
+          <div className="flex items-center gap-2 mb-2"><Send className="w-4 h-4 text-brand-gold" /><span className="text-sm font-semibold text-brand-text">Daily send queue</span></div>
+          {sendQueue.length === 0 ? <p className="text-sm text-brand-mutedtext">You're all caught up on follow-ups. Add new landlords to keep the pipeline warm.</p> : (
             <div className="flex gap-2 overflow-x-auto pb-1">
               {sendQueue.slice(0, 10).map((l) => (
-                <button key={l.id} onClick={() => setLogFor(l.id)} className="shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-2 text-left hover:border-brand">
-                  <div className="text-sm font-medium text-slate-800">{l.name}</div>
-                  <div className="text-xs text-slate-400">{l.stage}{l.next_action_date ? ` · due ${l.next_action_date}` : ""}</div>
+                <button key={l.id} onClick={() => setLogFor(l.id)} className="shrink-0 bg-brand-surface border border-brand-line rounded-lg px-3 py-2 text-left hover:border-brand-gold">
+                  <div className="text-sm font-medium text-brand-text">{l.name}</div>
+                  <div className="text-xs text-brand-mutedtext">{l.stage}{l.next_action_date ? ` · due ${l.next_action_date}` : ""}</div>
                 </button>
               ))}
             </div>
@@ -109,23 +100,23 @@ export default function LandlordCRM() {
 
       {view === "list" ? (
         <div className="space-y-2">
-          {landlords.length === 0 && <p className="text-sm text-slate-400">No landlords yet. Add your first contact to start the pipeline.</p>}
+          {landlords.length === 0 && <p className="text-sm text-brand-mutedtext">No landlords yet. Add your first contact to start the pipeline.</p>}
           {landlords.map((l) => (
-            <Card key={l.id} className="border-slate-200">
+            <Card key={l.id} className="border-brand-line">
               <CardContent className="py-3 flex items-center gap-3 flex-wrap">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-slate-800 truncate">{l.name}</span>
-                    {l.company && <span className="text-xs text-slate-400">{l.company}</span>}
-                    <Badge variant="outline" className="text-xs">{l.type === "pm" ? "PM Co" : "Private"}</Badge>
+                    <span className="font-medium text-brand-text truncate">{l.name}</span>
+                    {l.company && <span className="text-xs text-brand-mutedtext">{l.company}</span>}
+                    <Badge variant="outline" className="text-xs border-brand-line text-brand-mutedtext">{l.type === "pm" ? "PM Co" : "Private"}</Badge>
                   </div>
-                  <div className="text-xs text-slate-400">{l.email} {l.phone && `· ${l.phone}`}</div>
+                  <div className="text-xs text-brand-mutedtext">{l.email} {l.phone && `· ${l.phone}`}</div>
                 </div>
                 <Select value={l.stage} onValueChange={(v) => moveStage(l.id, v)}>
                   <SelectTrigger className="w-40 h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>{STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" onClick={() => setLogFor(l.id)}><Mail className="w-4 h-4 mr-1" /> Log touch</Button>
+                <Button variant="outline" size="sm" className="border-brand-line text-brand-text" onClick={() => setLogFor(l.id)}><Mail className="w-4 h-4 mr-1" /> Log touch</Button>
               </CardContent>
             </Card>
           ))}
@@ -136,13 +127,13 @@ export default function LandlordCRM() {
             const items = landlords.filter((l) => l.stage === stage);
             return (
               <div key={stage} className="shrink-0 w-60">
-                <div className="text-xs font-semibold text-slate-500 uppercase mb-2">{stage} ({items.length})</div>
+                <div className="text-xs font-semibold text-brand-mutedtext uppercase mb-2">{stage} ({items.length})</div>
                 <div className="space-y-2">
                   {items.map((l) => (
-                    <Card key={l.id} className="border-slate-200 cursor-pointer" onClick={() => setLogFor(l.id)}>
+                    <Card key={l.id} className="border-brand-line cursor-pointer hover:border-brand-gold" onClick={() => setLogFor(l.id)}>
                       <CardContent className="py-2.5">
-                        <div className="text-sm font-medium text-slate-800">{l.name}</div>
-                        <div className="text-xs text-slate-400">{l.type === "pm" ? "PM Co" : "Private"}{l.company ? ` · ${l.company}` : ""}</div>
+                        <div className="text-sm font-medium text-brand-text">{l.name}</div>
+                        <div className="text-xs text-brand-mutedtext">{l.type === "pm" ? "PM Co" : "Private"}{l.company ? ` · ${l.company}` : ""}</div>
                       </CardContent>
                     </Card>
                   ))}
@@ -155,10 +146,10 @@ export default function LandlordCRM() {
 
       {(showAdd || logFor) && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-4" onClick={() => { setShowAdd(false); setLogFor(null); }}>
-          <div className="bg-white rounded-xl p-5 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-brand-surface border border-brand-line rounded-xl p-5 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             {showAdd ? (
               <>
-                <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-brand">Add landlord</h3><button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+                <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-brand-text">Add landlord</h3><button onClick={() => setShowAdd(false)}><X className="w-4 h-4 text-brand-mutedtext" /></button></div>
                 <div className="space-y-3">
                   <Field label="Name"><Input value={form.name} onChange={(e) => set("name", e.target.value)} /></Field>
                   <div className="grid grid-cols-2 gap-2">
@@ -171,19 +162,19 @@ export default function LandlordCRM() {
                   </div>
                   <Field label="Next action date"><Input type="date" value={form.next_action_date} onChange={(e) => set("next_action_date", e.target.value)} /></Field>
                   <Field label="Notes"><Textarea rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
-                  <Button className="w-full bg-brand" onClick={addLandlord}>Add landlord</Button>
+                  <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={addLandlord}>Add landlord</Button>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-brand">Log outreach touch</h3><button onClick={() => setLogFor(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+                <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-brand-text">Log outreach touch</h3><button onClick={() => setLogFor(null)}><X className="w-4 h-4 text-brand-mutedtext" /></button></div>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <Field label="Channel"><Select value={log.channel} onValueChange={(v) => setLog((l) => ({ ...l, channel: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CHANNELS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></Field>
                     <Field label="Template used"><Input value={log.template} onChange={(e) => setLog((l) => ({ ...l, template: e.target.value }))} placeholder="e.g. Initial email" /></Field>
                   </div>
                   <Field label="Outcome"><Textarea rows={3} value={log.outcome} onChange={(e) => setLog((l) => ({ ...l, outcome: e.target.value }))} placeholder="What happened?" /></Field>
-                  <Button className="w-full bg-brand" onClick={saveLog}><Phone className="w-4 h-4 mr-1" /> Log touch</Button>
+                  <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={saveLog}><Phone className="w-4 h-4 mr-1" /> Log touch</Button>
                 </div>
               </>
             )}
@@ -195,5 +186,5 @@ export default function LandlordCRM() {
 }
 
 function Field({ label, children }) {
-  return <div className="space-y-1"><Label className="text-xs font-medium text-slate-600">{label}</Label>{children}</div>;
+  return <div className="space-y-1"><Label className="text-xs font-medium text-brand-text">{label}</Label>{children}</div>;
 }

@@ -19,10 +19,10 @@ export default function AdminPanel() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-brand flex items-center justify-center"><Shield className="w-6 h-6 text-white" /></div>
+          <div className="w-11 h-11 rounded-xl bg-brand-gold flex items-center justify-center"><Shield className="w-6 h-6 text-brand-ink" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-brand">Admin Panel</h1>
-            <p className="text-slate-500 text-sm">Manage users, roles, cohorts, curriculum, and view analytics & audit log.</p>
+            <h1 className="text-2xl font-bold text-brand-text">Admin Panel</h1>
+            <p className="text-brand-mutedtext text-sm">Manage users, roles, cohorts, curriculum, and view analytics & audit log.</p>
           </div>
         </div>
         <SeedButton />
@@ -85,43 +85,43 @@ function UsersTab() {
   const coaches = users.filter((u) => u.role === "coach");
 
   return (
-    <Card className="border-slate-200">
-      <CardHeader><CardTitle className="text-brand text-lg">Users ({users.length})</CardTitle></CardHeader>
+    <Card className="border-brand-line">
+      <CardHeader><CardTitle className="text-brand-text text-lg">Users ({users.length})</CardTitle></CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-xs text-slate-400">Note: passwords and authentication credentials are never shown or editable here.</p>
+        <p className="text-xs text-brand-mutedtext">Note: passwords and authentication credentials are never shown or editable here.</p>
         {users.map((u) => {
           const prof = profileFor(u.id);
           const e = edits[u.id] || {};
           return (
-            <div key={u.id} className="border border-slate-200 rounded-lg p-3">
+            <div key={u.id} className="border border-brand-line rounded-lg p-3 bg-brand-raised">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <div className="font-medium text-slate-800">{u.email}</div>
-                  <div className="text-xs text-slate-400">{u.full_name || "—"}{u.cohort ? ` · Cohort ${u.cohort}` : ""}</div>
+                  <div className="font-medium text-brand-text">{u.email}</div>
+                  <div className="text-xs text-brand-mutedtext">{u.full_name || "—"}{u.cohort ? ` · Cohort ${u.cohort}` : ""}</div>
                 </div>
-                <Badge className={u.role === "admin" ? "bg-brand text-white" : u.role === "coach" ? "bg-brand-bright text-white" : "bg-slate-200 text-slate-700"}>{u.role}</Badge>
+                <Badge className={u.role === "admin" ? "bg-brand-gold text-brand-ink" : u.role === "coach" ? "bg-brand-raised text-brand-text" : "bg-brand-raised text-brand-mutedtext"}>{u.role}</Badge>
               </div>
               <div className="grid sm:grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs">Role</Label>
+                  <Label className="text-xs text-brand-mutedtext">Role</Label>
                   <Select value={e.role || u.role} onValueChange={(v) => setField(u.id, "role", v)}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="host">host</SelectItem><SelectItem value="coach">coach</SelectItem><SelectItem value="admin">admin</SelectItem></SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Cohort</Label>
+                  <Label className="text-xs text-brand-mutedtext">Cohort</Label>
                   <Input className="h-8 text-xs" value={e.cohort !== undefined ? e.cohort : (u.cohort || "")} onChange={(ev) => setField(u.id, "cohort", ev.target.value)} />
                 </div>
                 <div>
-                  <Label className="text-xs">Assign coach</Label>
+                  <Label className="text-xs text-brand-mutedtext">Assign coach</Label>
                   <Select value={e.coachAssign || prof?.coach_id || ""} onValueChange={(v) => setField(u.id, "coachAssign", v)}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent><SelectItem value={null}>— None —</SelectItem>{coaches.map((c) => <SelectItem key={c.id} value={c.id}>{c.email}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
-              <Button size="sm" className="bg-brand mt-2" onClick={() => saveUser(u)}><Save className="w-3 h-3 mr-1" /> Save</Button>
+              <Button size="sm" className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90 mt-2" onClick={() => saveUser(u)}><Save className="w-3 h-3 mr-1" /> Save</Button>
             </div>
           );
         })}
@@ -150,22 +150,22 @@ function CurriculumTab() {
 
   if (loading) return <Spinner />;
   return (
-    <Card className="border-slate-200">
-      <CardHeader><CardTitle className="text-brand text-lg">Curriculum ({days.length} days)</CardTitle></CardHeader>
+    <Card className="border-brand-line">
+      <CardHeader><CardTitle className="text-brand-text text-lg">Curriculum ({days.length} days)</CardTitle></CardHeader>
       <CardContent className="space-y-2">
         {days.map((d) => (
-          <div key={d.id} className="flex items-center justify-between border border-slate-200 rounded-lg p-2.5">
-            <div><span className="text-xs text-slate-400">Day {d.day}</span> <span className="text-sm font-medium text-slate-800">{d.title}</span>{d.gate && <Badge className="ml-2 bg-brand-gold text-white text-xs">gate</Badge>}</div>
-            <Button variant="outline" size="sm" onClick={() => setEdit(d)}>Edit</Button>
+          <div key={d.id} className="flex items-center justify-between border border-brand-line rounded-lg p-2.5 bg-brand-raised">
+            <div><span className="text-xs text-brand-mutedtext">Day {d.day}</span> <span className="text-sm font-medium text-brand-text">{d.title}</span>{d.gate && <Badge className="ml-2 bg-brand-gold text-brand-ink text-xs">gate</Badge>}</div>
+            <Button variant="outline" size="sm" className="border-brand-line text-brand-text" onClick={() => setEdit(d)}>Edit</Button>
           </div>
         ))}
         {edit && (
           <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setEdit(null)}>
-            <div className="bg-white rounded-xl p-5 max-w-md w-full space-y-3" onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-semibold text-brand">Edit Day {edit.day}</h3>
-              <div><Label className="text-xs">Title</Label><Input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></div>
-              <div><Label className="text-xs">Why this matters</Label><Textarea rows={3} value={edit.why_it_matters} onChange={(e) => setEdit({ ...edit, why_it_matters: e.target.value })} /></div>
-              <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand" onClick={save}>Save</Button></div>
+            <div className="bg-brand-surface border border-brand-line rounded-xl p-5 max-w-md w-full space-y-3" onClick={(e) => e.stopPropagation()}>
+              <h3 className="font-semibold text-brand-text">Edit Day {edit.day}</h3>
+              <div><Label className="text-xs text-brand-mutedtext">Title</Label><Input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></div>
+              <div><Label className="text-xs text-brand-mutedtext">Why this matters</Label><Textarea rows={3} value={edit.why_it_matters} onChange={(e) => setEdit({ ...edit, why_it_matters: e.target.value })} /></div>
+              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save}>Save</Button></div>
             </div>
           </div>
         )}
@@ -183,22 +183,22 @@ function TemplatesTab() {
   const save = async () => { await base44.entities.Template.update(edit.id, { content: edit.content, title: edit.title }); setEdit(null); load(); };
   if (loading) return <Spinner />;
   return (
-    <Card className="border-slate-200">
-      <CardHeader><CardTitle className="text-brand text-lg">Templates ({templates.length})</CardTitle></CardHeader>
+    <Card className="border-brand-line">
+      <CardHeader><CardTitle className="text-brand-text text-lg">Templates ({templates.length})</CardTitle></CardHeader>
       <CardContent className="space-y-2">
         {templates.map((t) => (
-          <div key={t.id} className="flex items-center justify-between border border-slate-200 rounded-lg p-2.5">
-            <div><div className="text-sm font-medium text-slate-800">{t.title}</div><div className="text-xs text-slate-400">{t.category}</div></div>
-            <Button variant="outline" size="sm" onClick={() => setEdit(t)}>Edit</Button>
+          <div key={t.id} className="flex items-center justify-between border border-brand-line rounded-lg p-2.5 bg-brand-raised">
+            <div><div className="text-sm font-medium text-brand-text">{t.title}</div><div className="text-xs text-brand-mutedtext">{t.category}</div></div>
+            <Button variant="outline" size="sm" className="border-brand-line text-brand-text" onClick={() => setEdit(t)}>Edit</Button>
           </div>
         ))}
         {edit && (
           <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setEdit(null)}>
-            <div className="bg-white rounded-xl p-5 max-w-lg w-full space-y-3" onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-semibold text-brand">Edit template</h3>
-              <div><Label className="text-xs">Title</Label><Input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></div>
-              <div><Label className="text-xs">Content (Markdown)</Label><Textarea rows={12} className="font-mono text-xs" value={edit.content} onChange={(e) => setEdit({ ...edit, content: e.target.value })} /></div>
-              <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand" onClick={save}>Save</Button></div>
+            <div className="bg-brand-surface border border-brand-line rounded-xl p-5 max-w-lg w-full space-y-3" onClick={(e) => e.stopPropagation()}>
+              <h3 className="font-semibold text-brand-text">Edit template</h3>
+              <div><Label className="text-xs text-brand-mutedtext">Title</Label><Input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></div>
+              <div><Label className="text-xs text-brand-mutedtext">Content (Markdown)</Label><Textarea rows={12} className="font-mono text-xs" value={edit.content} onChange={(e) => setEdit({ ...edit, content: e.target.value })} /></div>
+              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save}>Save</Button></div>
             </div>
           </div>
         )}
@@ -253,18 +253,18 @@ function AuditTab() {
   }, []);
   if (loading) return <Spinner />;
   return (
-    <Card className="border-slate-200">
-      <CardHeader><CardTitle className="text-brand text-lg">Audit Log (append-only)</CardTitle></CardHeader>
+    <Card className="border-brand-line">
+      <CardHeader><CardTitle className="text-brand-text text-lg">Audit Log (append-only)</CardTitle></CardHeader>
       <CardContent className="space-y-1.5">
-        {logs.length === 0 && <p className="text-sm text-slate-400">No audit entries yet.</p>}
+        {logs.length === 0 && <p className="text-sm text-brand-mutedtext">No audit entries yet.</p>}
         {logs.map((l) => (
-          <div key={l.id} className="flex items-start gap-3 text-sm border-b border-slate-100 py-1.5 last:border-0">
-            <Badge variant="outline" className="text-xs shrink-0">{l.action}</Badge>
+          <div key={l.id} className="flex items-start gap-3 text-sm border-b border-brand-line py-1.5 last:border-0">
+            <Badge variant="outline" className="text-xs shrink-0 border-brand-line text-brand-mutedtext">{l.action}</Badge>
             <div className="min-w-0">
-              <span className="text-slate-700">{l.actor_email}</span>
-              <span className="text-slate-400"> · {l.details}</span>
-              {l.target_user_email && <span className="text-xs text-slate-400"> → {l.target_user_email}</span>}
-              <div className="text-xs text-slate-400">{l.created_date?.slice(0, 16).replace("T", " ")}</div>
+              <span className="text-brand-text">{l.actor_email}</span>
+              <span className="text-brand-mutedtext"> · {l.details}</span>
+              {l.target_user_email && <span className="text-xs text-brand-mutedtext"> → {l.target_user_email}</span>}
+              <div className="text-xs text-brand-mutedtext">{l.created_date?.slice(0, 16).replace("T", " ")}</div>
             </div>
           </div>
         ))}
@@ -290,16 +290,16 @@ function SeedButton() {
   };
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <Button variant="outline" className="border-brand text-brand" onClick={run} disabled={busy}>
+      <Button variant="outline" className="border-brand-gold text-brand-gold hover:bg-brand-gold/10" onClick={run} disabled={busy}>
         <RefreshCw className={`w-4 h-4 mr-1 ${busy ? "animate-spin" : ""}`} /> {busy ? "Seeding…" : "Re-seed content"}
       </Button>
-      {result && <span className="text-xs text-slate-500">Seeded {result.seededDays} days & {result.seededTemplates} templates — now {result.days} days, {result.templates} templates total.</span>}
-      {err && <span className="text-xs text-destructive">{err}</span>}
+      {result && <span className="text-xs text-brand-mutedtext">Seeded {result.seededDays} days & {result.seededTemplates} templates — now {result.days} days, {result.templates} templates total.</span>}
+      {err && <span className="text-xs text-red-400">{err}</span>}
     </div>
   );
 }
 
 function Stat({ label, value }) {
-  return <Card className="border-slate-200"><CardContent className="py-4"><div className="text-2xl font-bold text-brand">{value}</div><div className="text-xs text-slate-400">{label}</div></CardContent></Card>;
+  return <Card className="border-brand-line"><CardContent className="py-4"><div className="text-2xl font-bold text-brand-text">{value}</div><div className="text-xs text-brand-mutedtext">{label}</div></CardContent></Card>;
 }
-function Spinner() { return <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" /></div>; }
+function Spinner() { return <div className="flex justify-center py-10"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>; }

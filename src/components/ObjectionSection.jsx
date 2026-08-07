@@ -45,17 +45,17 @@ export default function ObjectionSection({ coachId }) {
   };
 
   return (
-    <div className="mt-3 border-t border-slate-100 pt-3">
+    <div className="mt-3 border-t border-brand-line pt-3">
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2"><MessageSquare className="w-4 h-4 text-brand" /><h4 className="font-semibold text-brand text-sm">Objection handler</h4></div>
-        <Button size="sm" className="bg-brand" onClick={saveAll} disabled={saving}><Save className="w-3 h-3 mr-1" /> {saved ? "Saved" : saving ? "Saving…" : "Save all"}</Button>
+        <div className="flex items-center gap-2"><MessageSquare className="w-4 h-4 text-brand-gold" /><h4 className="font-semibold text-brand-text text-sm">Objection handler</h4></div>
+        <Button size="sm" className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={saveAll} disabled={saving}><Save className="w-3 h-3 mr-1" /> {saved ? "Saved" : saving ? "Saving…" : "Save all"}</Button>
       </div>
-      <p className="text-xs text-slate-500 mb-3">The landlord says no in five predictable ways. Read Annette's answer, then write your own version in your voice.</p>
+      <p className="text-xs text-brand-mutedtext mb-3">The landlord says no in five predictable ways. Read Annette's answer, then write your own version in your voice.</p>
       <div className="space-y-3">
         {OBJECTIONS.map((o) => (
-          <div key={o.key} className="border border-slate-200 rounded-lg p-3">
-            <div className="text-sm font-medium text-slate-800">"{o.text}"</div>
-            <div className="text-xs text-slate-500 mt-1 border-l-2 border-brand-gold pl-2"><span className="font-semibold text-brand-gold">Annette:</span> {o.answer}</div>
+          <div key={o.key} className="border border-brand-line rounded-lg p-3 bg-brand-raised">
+            <div className="text-sm font-medium text-brand-text">"{o.text}"</div>
+            <div className="text-xs text-brand-mutedtext mt-1 border-l-2 border-brand-gold pl-2"><span className="font-semibold text-brand-gold">Annette:</span> {o.answer}</div>
             <Textarea rows={2} className="mt-2 text-sm" placeholder="Your version…" value={responses[o.key] || ""} onChange={(e) => setResponses((r) => ({ ...r, [o.key]: e.target.value }))} />
           </div>
         ))}

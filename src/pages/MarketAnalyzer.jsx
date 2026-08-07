@@ -17,6 +17,13 @@ const EMPTY = {
   data_pulled_date: "", summary: ""
 };
 
+const REC_STYLES = {
+  go: { border: "border-green-500/40", bg: "bg-green-500/10", text: "text-green-400", icon: CheckCircle2, label: "GO" },
+  hold: { border: "border-amber-500/40", bg: "bg-amber-500/10", text: "text-amber-400", icon: Clock, label: "HOLD" },
+  no_go: { border: "border-red-500/40", bg: "bg-red-500/10", text: "text-red-400", icon: XCircle, label: "NO-GO" }
+};
+const REC_BADGE = { go: "bg-green-500/15 text-green-400", hold: "bg-amber-500/15 text-amber-400", no_go: "bg-red-500/15 text-red-400" };
+
 export default function MarketAnalyzer() {
   const { coachId } = useHostProfile();
   const [markets, setMarkets] = useState([]);
@@ -53,22 +60,22 @@ export default function MarketAnalyzer() {
 
   const remove = async (id) => { await base44.entities.Market.delete(id); load(); };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
 
   const rec = result.recommendation;
-  const recColor = rec === "go" ? "green" : rec === "hold" ? "amber" : "red";
-  const recLabel = { go: "GO", hold: "HOLD", no_go: "NO-GO" }[rec];
+  const rs = REC_STYLES[rec];
+  const RecIcon = rs.icon;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand flex items-center gap-2"><MapPin className="w-6 h-6" /> Market Analyzer</h1>
-        <p className="text-slate-500 text-sm">Score a market across five components. Regulation is non-negotiable — one ordinance can make a market unviable overnight.</p>
+        <h1 className="text-2xl font-bold text-brand-text flex items-center gap-2"><MapPin className="w-6 h-6 text-brand-gold" /> Market Analyzer</h1>
+        <p className="text-brand-mutedtext text-sm">Score a market across five components. Regulation is non-negotiable — one ordinance can make a market unviable overnight.</p>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-6">
-        <Card className="lg:col-span-3 border-slate-200">
-          <CardHeader><CardTitle className="text-brand">Market data</CardTitle></CardHeader>
+        <Card className="lg:col-span-3 border-brand-line">
+          <CardHeader><CardTitle className="text-brand-text">Market data</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-3 gap-3">
               <Field label="City"><Input value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Nashville" /></Field>
@@ -101,22 +108,22 @@ export default function MarketAnalyzer() {
               <Field label="Regulation source URL"><Input value={form.regulation_source_url} onChange={(e) => set("regulation_source_url", e.target.value)} placeholder="city.gov/short-term-rentals" /></Field>
             </div>
             <Field label="Regulation evidence URL (screenshot)"><Input value={form.regulation_evidence_url} onChange={(e) => set("regulation_evidence_url", e.target.value)} /></Field>
-            <Button onClick={save} disabled={saving || !form.city} className="w-full bg-brand"><Plus className="w-4 h-4 mr-1" /> {saving ? "Saving…" : "Save market"}</Button>
+            <Button onClick={save} disabled={saving || !form.city} className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90"><Plus className="w-4 h-4 mr-1" /> {saving ? "Saving…" : "Save market"}</Button>
           </CardContent>
         </Card>
 
-        <Card className={`lg:col-span-2 ${recColor === "green" ? "border-green-500/40" : recColor === "amber" ? "border-amber-500/40" : "border-red-500/40"}`}>
+        <Card className={`lg:col-span-2 ${rs.border} ${rs.bg}`}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-brand">Recommendation</CardTitle>
-              {rec === "go" ? <CheckCircle2 className="w-7 h-7 text-green-600" /> : rec === "hold" ? <Clock className="w-7 h-7 text-amber-500" /> : <XCircle className="w-7 h-7 text-red-500" />}
+              <CardTitle className="text-brand-text">Recommendation</CardTitle>
+              <RecIcon className={`w-7 h-7 ${rs.text}`} />
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className={`text-3xl font-extrabold ${recColor === "green" ? "text-green-600" : recColor === "amber" ? "text-amber-500" : "text-red-500"}`}>{recLabel}</div>
+            <div className={`text-3xl font-extrabold ${rs.text}`}>{rs.label}</div>
 
             {result.regulation_forced_no_go && (
-              <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 p-3 rounded-lg">
+              <div className="flex items-start gap-2 text-sm text-red-400 bg-red-500/10 p-3 rounded-lg">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>One ordinance can make a market unviable overnight. With regulation <strong>{form.regulation_status}</strong>, this step is non-negotiable — the recommendation is forced to NO-GO regardless of score.</span>
               </div>
@@ -124,8 +131,8 @@ export default function MarketAnalyzer() {
 
             <Row label="Arbitrage spread" value={`$${result.arbitrage_spread}/mo`} />
             <Row label="Spread ratio" value={`${result.spread_ratio}x`} hint={result.spread_ratio < 2 ? "under 2x = No-Go" : result.spread_ratio <= 2.5 ? "2–2.5x = Hold" : "over 2.5x = Go"} />
-            <div className="border-t border-slate-100 pt-2">
-              <div className="text-sm font-medium text-slate-700 mb-1">Composite score: <span className="text-brand font-bold">{result.composite_score}/100</span></div>
+            <div className="border-t border-brand-line pt-2">
+              <div className="text-sm font-medium text-brand-text mb-1">Composite score: <span className="text-brand-gold font-bold">{result.composite_score}/100</span></div>
               <div className="space-y-1">
                 <CompRow label="ADR" value={result.components.adr} />
                 <CompRow label="Occupancy" value={result.components.occupancy} />
@@ -133,37 +140,37 @@ export default function MarketAnalyzer() {
                 <CompRow label="Supply" value={result.components.supply} />
                 <CompRow label="Spread" value={result.components.spread} />
               </div>
-              {result.staleDeduction > 0 && <div className="text-xs text-red-600 mt-1">−{result.staleDeduction} pts — data over 6 months old (stale)</div>}
+              {result.staleDeduction > 0 && <div className="text-xs text-red-400 mt-1">−{result.staleDeduction} pts — data over 6 months old (stale)</div>}
             </div>
 
             {result.thin_market_flag && (
-              <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 p-2.5 rounded-lg"><AlertTriangle className="w-4 h-4 shrink-0" /> Thin market — fewer than 10 comps. Proceed with caution.</div>
+              <div className="flex items-center gap-2 text-sm text-amber-400 bg-amber-500/10 p-2.5 rounded-lg"><AlertTriangle className="w-4 h-4 shrink-0" /> Thin market — fewer than 10 comps. Proceed with caution.</div>
             )}
             {result.stale_data_flag && !result.staleDeduction && (
-              <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 p-2.5 rounded-lg"><Clock className="w-4 h-4 shrink-0" /> Data is over 6 months old.</div>
+              <div className="flex items-center gap-2 text-sm text-amber-400 bg-amber-500/10 p-2.5 rounded-lg"><Clock className="w-4 h-4 shrink-0" /> Data is over 6 months old.</div>
             )}
           </CardContent>
         </Card>
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold text-brand">Saved markets ({markets.length})</h2>
-        {markets.length === 0 && <p className="text-sm text-slate-400">No markets yet. Score your first market above.</p>}
+        <h2 className="text-lg font-semibold text-brand-text">Saved markets ({markets.length})</h2>
+        {markets.length === 0 && <p className="text-sm text-brand-mutedtext">No markets yet. Score your first market above.</p>}
         {markets.map((m) => (
-          <Card key={m.id} className="border-slate-200">
+          <Card key={m.id} className="border-brand-line">
             <CardContent className="py-3 flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-slate-800">{m.city}{m.state ? `, ${m.state}` : ""}</span>
-                  {m.submarket && <span className="text-xs text-slate-400">{m.submarket}</span>}
-                  <Badge className={m.recommendation === "go" ? "bg-green-100 text-green-700" : m.recommendation === "hold" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}>{(m.recommendation || "").toUpperCase()}</Badge>
-                  <Badge variant="outline" className="text-xs">{m.composite_score}/100</Badge>
-                  {m.thin_market_flag && <Badge variant="secondary" className="text-xs">thin</Badge>}
-                  {m.stale_data_flag && <Badge variant="secondary" className="text-xs">stale</Badge>}
+                  <span className="font-medium text-brand-text">{m.city}{m.state ? `, ${m.state}` : ""}</span>
+                  {m.submarket && <span className="text-xs text-brand-mutedtext">{m.submarket}</span>}
+                  <Badge className={REC_BADGE[m.recommendation]}>{(m.recommendation || "").toUpperCase()}</Badge>
+                  <Badge variant="outline" className="text-xs border-brand-line text-brand-text">{m.composite_score}/100</Badge>
+                  {m.thin_market_flag && <Badge variant="secondary" className="text-xs bg-brand-raised text-brand-mutedtext">thin</Badge>}
+                  {m.stale_data_flag && <Badge variant="secondary" className="text-xs bg-brand-raised text-brand-mutedtext">stale</Badge>}
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">spread {m.spread_ratio}x · {m.regulation_status}</div>
+                <div className="text-xs text-brand-mutedtext mt-0.5">spread {m.spread_ratio}x · {m.regulation_status}</div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => remove(m.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+              <Button variant="ghost" size="sm" onClick={() => remove(m.id)} className="hover:bg-brand-raised"><Trash2 className="w-4 h-4 text-red-400" /></Button>
             </CardContent>
           </Card>
         ))}
@@ -173,11 +180,11 @@ export default function MarketAnalyzer() {
 }
 
 function Field({ label, children }) {
-  return <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-600">{label}</Label>{children}</div>;
+  return <div className="space-y-1.5"><Label className="text-xs font-medium text-brand-text">{label}</Label>{children}</div>;
 }
 function Row({ label, value, hint }) {
-  return <div className="flex justify-between text-sm"><span className="text-slate-500">{label}</span><span className="font-medium text-slate-800">{value}{hint && <span className="text-xs text-slate-400 ml-1">({hint})</span>}</span></div>;
+  return <div className="flex justify-between text-sm"><span className="text-brand-mutedtext">{label}</span><span className="font-medium text-brand-text">{value}{hint && <span className="text-xs text-brand-mutedtext ml-1">({hint})</span>}</span></div>;
 }
 function CompRow({ label, value }) {
-  return <div className="flex justify-between text-xs"><span className="text-slate-500">{label}</span><span className="font-medium text-slate-700">{value}/20</span></div>;
+  return <div className="flex justify-between text-xs"><span className="text-brand-mutedtext">{label}</span><span className="font-medium text-brand-text">{value}/20</span></div>;
 }

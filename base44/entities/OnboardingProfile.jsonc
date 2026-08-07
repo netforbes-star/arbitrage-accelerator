@@ -33,6 +33,19 @@
     "coach_id": {
       "type": "string",
       "description": "Assigned coach user id"
+    },
+    "terms_accepted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "terms_version": {
+      "type": "string"
+    },
+    "acknowledgements_accepted": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
