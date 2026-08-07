@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 
-// Loads the current host's onboarding profile (used for coach_id stamping,
+// Loads the current host's onboarding profile (program start date,
 // start date, target market). Coaches/admins pass a hostId to load a specific
 // host's profile instead.
 export function useHostProfile(hostId) {
@@ -29,5 +29,5 @@ export function useHostProfile(hostId) {
     };
   }, [hostId]);
 
-  return { profile, loading, coachId: profile?.coach_id || "" };
+  return { profile, loading };
 }

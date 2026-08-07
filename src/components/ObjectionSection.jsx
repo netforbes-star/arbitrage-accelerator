@@ -13,7 +13,7 @@ const OBJECTIONS = [
   { key: "flat_no", text: "A flat 'no' from a property management company", answer: "\"Can you give me 30 seconds to explain why?\" Then lead with guaranteed rent and asset protection. Never say \"Airbnb\" or \"corporate leasing\" — those trigger automatic rejection." }
 ];
 
-export default function ObjectionSection({ coachId }) {
+export default function ObjectionSection() {
   const [existing, setExisting] = useState({});
   const [responses, setResponses] = useState({});
   const [saving, setSaving] = useState(false);

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Home, Save } from "lucide-react";
 
-export default function BuyBoxSection({ coachId }) {
+export default function BuyBoxSection() {
   const [box, setBox] = useState(null);
   const [form, setForm] = useState({ bedrooms: 2, bathrooms: 1, max_monthly_rent: "", max_drive_time_minutes: "", requires_fenced_yard: false, pets_allowed: false, parking_required: false, furnished_allowed_required: false, notes: "" });
   const [saving, setSaving] = useState(false);

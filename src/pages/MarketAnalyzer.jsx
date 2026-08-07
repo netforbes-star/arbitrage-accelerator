@@ -26,7 +26,7 @@ const REC_STYLES = {
 const REC_BADGE = { go: "bg-green-500/15 text-green-400", hold: "bg-amber-500/15 text-amber-400", no_go: "bg-red-500/15 text-red-400" };
 
 export default function MarketAnalyzer() {
-  const { coachId } = useHostProfile();
+
   const [markets, setMarkets] = useState([]);
   const [form, setForm] = useState({ ...EMPTY });
   const [loading, setLoading] = useState(true);

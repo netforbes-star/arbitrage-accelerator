@@ -15,7 +15,7 @@ const STAGES = ["not contacted", "contacted", "responded", "conversation held", 
 const CHANNELS = ["email", "phone", "text", "in-person", "direct mail", "social"];
 
 export default function LandlordCRM() {
-  const { coachId } = useHostProfile();
+
   const [landlords, setLandlords] = useState([]);
   const [view, setView] = useState("list");
   const [loading, setLoading] = useState(true);

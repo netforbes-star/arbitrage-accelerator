@@ -20,7 +20,7 @@ const EMPTY = {
 };
 
 export default function DealAnalyzer() {
-  const { coachId } = useHostProfile();
+
   const [deals, setDeals] = useState([]);
   const [form, setForm] = useState({ ...EMPTY });
   const [editingId, setEditingId] = useState(null);

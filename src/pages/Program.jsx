@@ -14,7 +14,7 @@ import BuyBoxSection from "@/components/BuyBoxSection";
 import ObjectionSection from "@/components/ObjectionSection";
 
 export default function Program() {
-  const { coachId } = useHostProfile();
+
   const [profile, setProfile] = useState(null);
   const [days, setDays] = useState([]);
   const [progress, setProgress] = useState([]);
@@ -144,8 +144,8 @@ export default function Program() {
                           </div>
                         );
                       })}
-                      {d.day === 1 && <BuyBoxSection coachId={coachId} />}
-                      {d.day === 13 && <ObjectionSection coachId={coachId} />}
+                      {d.day === 1 && <BuyBoxSection />}
+                      {d.day === 13 && <ObjectionSection />}
                     </CardContent>
                   </Card>
                 ))}
