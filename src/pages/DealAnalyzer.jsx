@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { analyzeDeal, DEAL_STATUSES } from "@/lib/dealMath";
 import { computeDeal } from "@/functions/computeDeal";
+import { saveDeal } from "@/functions/saveDeal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,10 +44,6 @@ export default function DealAnalyzer() {
   const save = async () => {
     setError("");
     if (!form.nickname) { setError("Add a nickname or address first."); return; }
-    if (form.status === "lease signed" && !form.permission_artifact_url) {
-      setError("A deal can't be marked 'lease signed' without an uploaded written-permission artifact. Upload evidence first (Day 20 gate).");
-      return;
-    }
     setSaving(true);
     let calc;
     try {
@@ -90,10 +87,11 @@ export default function DealAnalyzer() {
       fail_fix: calc.fail_fix
     };
     try {
-      if (editingId) await base44.entities.Deal.update(editingId, payload);
-      else await base44.entities.Deal.create(payload);
+      await saveDeal({ deal_id: editingId, fields: payload });
       reset();
       load();
+    } catch (e) {
+      setError(e.response?.data?.error || "Something went wrong saving this deal. Please try again.");
     } finally {
       setSaving(false);
     }
