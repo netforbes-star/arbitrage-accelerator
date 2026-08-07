@@ -30,12 +30,12 @@
     "create": {},
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "__system_never__"
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__system_never__"
       }
     }
   }
