@@ -1,0 +1,83 @@
+{
+  "name": "OutreachLog",
+  "type": "object",
+  "properties": {
+    "landlord_id": {
+      "type": "string"
+    },
+    "landlord_name": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "email",
+        "phone",
+        "text",
+        "in-person",
+        "direct mail",
+        "social"
+      ]
+    },
+    "template": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "coach_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "landlord_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.coach_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

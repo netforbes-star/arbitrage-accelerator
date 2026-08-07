@@ -1,0 +1,161 @@
+{
+  "name": "Deal",
+  "type": "object",
+  "properties": {
+    "nickname": {
+      "type": "string"
+    },
+    "beds": {
+      "type": "number"
+    },
+    "baths": {
+      "type": "number"
+    },
+    "monthly_rent": {
+      "type": "number"
+    },
+    "utilities": {
+      "type": "number"
+    },
+    "furnishing_cost": {
+      "type": "number"
+    },
+    "deposit": {
+      "type": "number"
+    },
+    "drive_time_minutes": {
+      "type": "number"
+    },
+    "location_score": {
+      "type": "number"
+    },
+    "size_score": {
+      "type": "number"
+    },
+    "condition_score": {
+      "type": "number"
+    },
+    "str_revenue_estimate": {
+      "type": "number"
+    },
+    "mtr_revenue_estimate": {
+      "type": "number"
+    },
+    "adr_override": {
+      "type": "number"
+    },
+    "occupancy_override": {
+      "type": "number"
+    },
+    "cost_ratio_override": {
+      "type": "number"
+    },
+    "override_reason": {
+      "type": "string"
+    },
+    "permission_type": {
+      "type": "string",
+      "enum": [
+        "verbal",
+        "email",
+        "signed",
+        "none"
+      ],
+      "default": "none"
+    },
+    "permission_artifact_url": {
+      "type": "string"
+    },
+    "all_in_monthly_cost": {
+      "type": "number"
+    },
+    "conservative_str_profit": {
+      "type": "number"
+    },
+    "conservative_mtr_profit": {
+      "type": "number"
+    },
+    "profit_margin_pct": {
+      "type": "number"
+    },
+    "months_to_recoup": {
+      "type": "number"
+    },
+    "recommended_strategy": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL",
+        "evaluating"
+      ]
+    },
+    "fail_fix": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "evaluating",
+        "outreach sent",
+        "negotiating",
+        "lease signed",
+        "passed",
+        "lost"
+      ],
+      "default": "evaluating"
+    },
+    "coach_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nickname"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.coach_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

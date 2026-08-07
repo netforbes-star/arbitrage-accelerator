@@ -1,0 +1,101 @@
+{
+  "name": "Landlord",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "private",
+        "pm"
+      ]
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "not contacted",
+        "contacted",
+        "responded",
+        "conversation held",
+        "property viewed",
+        "negotiating",
+        "won",
+        "lost",
+        "nurture"
+      ],
+      "default": "not contacted"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "last_contact_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_action_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "coach_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.coach_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

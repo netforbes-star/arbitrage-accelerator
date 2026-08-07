@@ -1,0 +1,195 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import ProgressRing from "@/components/ProgressRing";
+import { getCurrentDay, daysRemaining, dayDate, WEEK_THEMES } from "@/lib/curriculum";
+import { Users, MessageSquare, Calculator, Handshake, CheckCircle2, Clock, ArrowRight, LifeBuoy } from "lucide-react";
+
+export default function Dashboard() {
+  const [profile, setProfile] = useState(null);
+  const [days, setDays] = useState([]);
+  const [progress, setProgress] = useState([]);
+  const [deals, setDeals] = useState([]);
+  const [landlords, setLandlords] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [p, d, pr, de, ll] = await Promise.all([
+          base44.entities.OnboardingProfile.list("-created_date", 1),
+          base44.entities.ProgramDay.list("day", 50),
+          base44.entities.UserTaskProgress.list("-created_date", 200),
+          base44.entities.Deal.list("-created_date", 50),
+          base44.entities.Landlord.list("-created_date", 200)
+        ]);
+        setProfile(p[0] || null);
+        setDays(d.sort((a, b) => a.day - b.day));
+        setProgress(pr);
+        setDeals(de);
+        setLandlords(ll);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const start = profile?.start_date;
+  const currentDay = getCurrentDay(start);
+  const remaining = daysRemaining(start);
+  const progMap = {};
+  progress.forEach((p) => { progMap[`${p.day}-${p.task_index}`] = p; });
+
+  const totalTasks = days.reduce((s, d) => s + (d.tasks?.length || 0), 0) || 28;
+  const completedTasks = progress.filter((p) => p.status === "complete").length;
+  const programPct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const weekNum = Math.ceil(currentDay / 7);
+  const weekDays = days.filter((d) => d.week === weekNum);
+  const weekTasks = weekDays.reduce((s, d) => s + (d.tasks?.length || 0), 0) || 7;
+  const weekDone = weekDays.reduce((s, d) => s + (d.tasks || []).filter((_, i) => progMap[`${d.day}-${i}`]?.status === "complete").length, 0);
+  const weekPct = weekTasks ? Math.round((weekDone / weekTasks) * 100) : 0;
+
+  const todayDay = days.find((d) => d.day === currentDay);
+  const todayTasks = todayDay?.tasks || [];
+
+  const landlordsContacted = landlords.filter((l) => l.stage !== "not contacted").length;
+  const conversations = landlords.filter((l) => ["conversation held", "property viewed", "negotiating", "won"].includes(l.stage)).length;
+  const dealsUnderwritten = deals.length;
+  const dealsNegotiating = deals.filter((d) => d.status === "negotiating").length;
+
+  const expectedPace = Math.round((currentDay / 28) * totalTasks);
+  const behind = completedTasks < expectedPace - 2;
+
+  const nextBest = todayTasks.some((_, i) => !progMap[`${currentDay}-${i}`] || progMap[`${currentDay}-${i}`].status === "pending")
+    ? `Finish today's tasks (Day ${currentDay})`
+    : dealsNegotiating > 0
+    ? "Push your active negotiation forward today"
+    : landlordsContacted < 100
+    ? "Keep the outreach queue moving"
+    : "Underwrite your next deal";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-brand">
+            {profile?.target_market_city ? `Hello — let's win ${profile.target_market_city}` : "Your dashboard"}
+          </h1>
+          <p className="text-slate-500 text-sm">Day {currentDay} of 28 · {remaining} days remaining · Week {weekNum}: {WEEK_THEMES[weekNum]}</p>
+        </div>
+        <Link to="/program"><Button variant="outline" className="border-brand text-brand">Open program <ArrowRight className="w-4 h-4 ml-1" /></Button></Link>
+      </div>
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        <Card className="border-slate-200">
+          <CardContent className="flex items-center gap-4 py-5">
+            <ProgressRing value={programPct} />
+            <div>
+              <div className="text-sm text-slate-500">Program progress</div>
+              <div className="text-2xl font-bold text-brand">{completedTasks}/{totalTasks}</div>
+              <div className="text-xs text-slate-400">tasks complete</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-slate-200 sm:col-span-2">
+          <CardContent className="py-5">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-medium text-slate-700">Week {weekNum} progress</div>
+              <div className="text-sm text-slate-500">{weekDone}/{weekTasks}</div>
+            </div>
+            <Progress value={weekPct} className="h-3 [&>div]:bg-brand-gold" />
+            <div className="text-xs text-slate-400 mt-2">{WEEK_THEMES[weekNum]}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Metric icon={Users} value={landlordsContacted} goal="100" label="Landlords contacted" />
+        <Metric icon={MessageSquare} value={conversations} goal="10-15" label="Conversations this week" />
+        <Metric icon={Calculator} value={dealsUnderwritten} goal="8-10" label="Deals underwritten" />
+        <Metric icon={Handshake} value={dealsNegotiating} goal="—" label="Deals in negotiation" />
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2 border-slate-200">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-brand text-lg">Today's focus</CardTitle>
+              {todayDay?.gate && <Badge className="bg-brand-gold text-white">Gate day</Badge>}
+            </div>
+            {todayDay && <p className="text-xs text-slate-500">{dayDate(start, currentDay)} · {todayDay.title}</p>}
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {todayTasks.length === 0 && <p className="text-sm text-slate-400 py-4">All caught up — nice work today.</p>}
+            {todayTasks.map((t, i) => {
+              const st = progMap[`${currentDay}-${i}`]?.status;
+              return (
+                <Link key={i} to="/program" className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 border border-slate-100">
+                  {st === "complete" ? <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" /> : <Clock className="w-5 h-5 text-slate-300 mt-0.5" />}
+                  <div className="flex-1">
+                    <div className={`text-sm font-medium ${st === "complete" ? "line-through text-slate-400" : "text-slate-800"}`}>{t.title}</div>
+                    <div className="text-xs text-slate-400">{t.time_estimate} · {t.completion_condition}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card className="border-brand-gold/40 bg-brand-gold/5">
+            <CardContent className="py-5">
+              <div className="flex items-center gap-2 mb-1">
+                <ArrowRight className="w-4 h-4 text-brand-gold" />
+                <div className="text-xs uppercase tracking-wide text-brand-gold font-semibold">Next best action</div>
+              </div>
+              <div className="text-sm font-medium text-slate-800">{nextBest}</div>
+            </CardContent>
+          </Card>
+
+          {behind && (
+            <Card className="border-slate-200">
+              <CardContent className="py-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <LifeBuoy className="w-4 h-4 text-brand" />
+                  <div className="text-sm font-semibold text-brand">Recalibrate</div>
+                </div>
+                <p className="text-xs text-slate-500 mb-3">You're a touch behind pace. That's okay — here are warm options:</p>
+                <div className="space-y-2 text-xs">
+                  <Link to="/program" className="block w-full text-left p-2 rounded border border-slate-200 hover:bg-slate-50 text-slate-700">Drop a non-gate task</Link>
+                  <Link to="/coach" className="block w-full text-left p-2 rounded border border-slate-200 hover:bg-slate-50 text-slate-700">Book a coaching call</Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Metric({ icon: Icon, value, goal, label }) {
+  return (
+    <Card className="border-slate-200">
+      <CardContent className="py-4">
+        <Icon className="w-5 h-5 text-brand mb-2" />
+        <div className="text-2xl font-bold text-brand">{value}</div>
+        <div className="text-xs text-slate-400">goal {goal}</div>
+        <div className="text-xs text-slate-500 mt-1">{label}</div>
+      </CardContent>
+    </Card>
+  );
+}

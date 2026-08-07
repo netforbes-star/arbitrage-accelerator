@@ -1,0 +1,62 @@
+{
+  "name": "ProgramDay",
+  "type": "object",
+  "properties": {
+    "week": {
+      "type": "number"
+    },
+    "day": {
+      "type": "number"
+    },
+    "title": {
+      "type": "string"
+    },
+    "why_it_matters": {
+      "type": "string"
+    },
+    "gate": {
+      "type": "boolean",
+      "default": false
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "time_estimate": {
+            "type": "string"
+          },
+          "completion_condition": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "week",
+    "day",
+    "title"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "name": "OnboardingProfile",
+  "type": "object",
+  "properties": {
+    "portfolio_size": {
+      "type": "string",
+      "description": "Current number of properties in the host's portfolio"
+    },
+    "target_market_city": {
+      "type": "string"
+    },
+    "capital_available": {
+      "type": "number",
+      "description": "Capital available in USD"
+    },
+    "hours_per_week": {
+      "type": "number"
+    },
+    "biggest_constraint": {
+      "type": "string"
+    },
+    "goal_28_day": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "weekly_outreach_target": {
+      "type": "number",
+      "default": 20
+    },
+    "coach_id": {
+      "type": "string",
+      "description": "Assigned coach user id"
+    }
+  },
+  "required": [
+    "target_market_city",
+    "start_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.coach_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

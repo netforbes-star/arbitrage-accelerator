@@ -10,6 +10,11 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			brand: {
+  				DEFAULT: '#191983',
+  				bright: '#1C1C94',
+  				gold: '#CDAA4C'
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

@@ -1,0 +1,68 @@
+{
+  "name": "CoachFeedback",
+  "type": "object",
+  "properties": {
+    "host_id": {
+      "type": "string",
+      "description": "The host being reviewed"
+    },
+    "host_name": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "section": {
+      "type": "string",
+      "description": "Which area the feedback relates to"
+    }
+  },
+  "required": [
+    "host_id",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.host_id": "{{user.id}}"
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
