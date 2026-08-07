@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { crmMetrics } from "@/functions/crmMetrics";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +9,47 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Users, Plus, Phone, Mail, Send, List, LayoutGrid, X } from "lucide-react";
+import { Users, Plus, Phone, Mail, Send, List, LayoutGrid, X, ChevronDown } from "lucide-react";
 import LandlordKanban from "@/components/LandlordKanban";
 
 const STAGES = ["not contacted", "contacted", "responded", "conversation held", "property viewed", "negotiating", "won", "lost", "nurture"];
+const ACTIVE_STAGES = ["not contacted", "contacted", "responded", "conversation held", "property viewed", "negotiating", "nurture"];
 const CHANNELS = ["email", "phone", "text", "in-person", "direct mail", "social"];
+const PAGE_SIZE = 50;
+const QUEUE_LIMIT = 100;
 
 export default function LandlordCRM() {
-
   const queryClient = useQueryClient();
-  const landlordsQuery = useQuery({ queryKey: ["landlords"], queryFn: () => base44.entities.Landlord.list("-created_date", 300) });
-  const landlords = landlordsQuery.data || [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Daily action queue: only the active pipeline (excludes won/lost history),
+  // sorted by next action date — today's work without loading the full CRM.
+  const queueQuery = useQuery({
+    queryKey: ["landlords", "queue"],
+    queryFn: () => base44.entities.Landlord.filter({ stage: { $in: ACTIVE_STAGES } }, "next_action_date", QUEUE_LIMIT)
+  });
+  const queue = queueQuery.data || [];
+
+  // Aggregate metrics: counts computed server-side so the browser never loads
+  // the historical landlord list just to total the pipeline.
+  const metricsQuery = useQuery({ queryKey: ["landlords", "metrics"], queryFn: () => crmMetrics({}) });
+  const metrics = metricsQuery.data || {};
+  const metricsReady = metricsQuery.isSuccess;
+  const contacted = metricsReady ? (metrics.contacted ?? 0) : "—";
+  const conversations = metricsReady ? (metrics.conversations ?? 0) : "—";
+  const total = metricsReady ? (metrics.total ?? 0) : "—";
+
+  // Full CRM list: incremental cursor pagination — an initial page, then
+  // "Load more" for history. The browser is never handed hundreds at once.
+  const listQuery = useInfiniteQuery({
+    queryKey: ["landlords", "list"],
+    queryFn: ({ pageParam }) => pageParam
+      ? base44.entities.Landlord.filter({ created_date: { $lt: pageParam } }, "-created_date", PAGE_SIZE)
+      : base44.entities.Landlord.list("-created_date", PAGE_SIZE),
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => (lastPage.length === PAGE_SIZE ? lastPage[lastPage.length - 1]?.created_date : undefined)
+  });
+  const landlords = useMemo(() => listQuery.data?.pages.flat() ?? [], [listQuery.data]);
 
   const [view, setView] = useState("list");
   const [showAdd, setShowAdd] = useState(false);
@@ -30,23 +61,49 @@ export default function LandlordCRM() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const sendQueue = useMemo(() => queue.filter((l) => !l.next_action_date || l.next_action_date <= today), [queue, today]);
+
+  // Optimistically patch one landlord inside the paginated list cache.
+  const patchLandlordInList = (id, patch) => {
+    queryClient.setQueryData({ queryKey: ["landlords", "list"] }, (old) => {
+      if (!old) return old;
+      return { ...old, pages: old.pages.map((page) => page.map((l) => (l.id === id ? { ...l, ...patch } : l))) };
+    });
+  };
+
+  // Queue + metrics are small/cheap; refetch them after any change so they stay
+  // accurate without re-downloading the paginated history list.
+  const refreshLight = () => {
+    queryClient.invalidateQueries({ queryKey: ["landlords", "queue"] });
+    queryClient.invalidateQueries({ queryKey: ["landlords", "metrics"] });
+  };
+
   const addMutation = useMutation({
     mutationFn: (payload) => base44.entities.Landlord.create(payload),
-    onSuccess: (newRecord) => queryClient.setQueryData(["landlords"], (old) => [newRecord, ...(old || [])])
+    onSuccess: (newRecord) => {
+      queryClient.setQueryData({ queryKey: ["landlords", "list"] }, (old) => {
+        if (!old) return old;
+        const pages = [...old.pages];
+        pages[0] = [newRecord, ...(pages[0] || [])];
+        return { ...old, pages };
+      });
+      refreshLight();
+    }
   });
 
   const moveStageMutation = useMutation({
     mutationFn: ({ id, stage, date }) => base44.entities.Landlord.update(id, { stage, last_contact_date: date }),
     onMutate: async ({ id, stage, date }) => {
-      await queryClient.cancelQueries({ queryKey: ["landlords"] });
-      const prev = queryClient.getQueryData(["landlords"]);
-      queryClient.setQueryData(["landlords"], (old) => (old || []).map((l) => (l.id === id ? { ...l, stage, last_contact_date: date } : l)));
+      await queryClient.cancelQueries({ queryKey: ["landlords", "list"] });
+      const prev = queryClient.getQueryData({ queryKey: ["landlords", "list"] });
+      patchLandlordInList(id, { stage, last_contact_date: date });
       return { prev };
     },
     onError: (err, vars, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(["landlords"], ctx.prev);
+      if (ctx?.prev) queryClient.setQueryData({ queryKey: ["landlords", "list"] }, ctx.prev);
       setError("We couldn't update this landlord's stage. Please try again.");
-    }
+    },
+    onSuccess: () => refreshLight()
   });
 
   const logMutation = useMutation({
@@ -60,10 +117,8 @@ export default function LandlordCRM() {
       return { bumped };
     },
     onSuccess: (res, vars) => {
-      if (res.bumped) {
-        const date = new Date().toISOString().slice(0, 10);
-        queryClient.setQueryData(["landlords"], (old) => (old || []).map((l) => (l.id === vars.logFor ? { ...l, stage: "contacted", last_contact_date: date } : l)));
-      }
+      if (res.bumped) patchLandlordInList(vars.logFor, { stage: "contacted", last_contact_date: new Date().toISOString().slice(0, 10) });
+      refreshLight();
     }
   });
 
@@ -85,11 +140,11 @@ export default function LandlordCRM() {
 
   const moveStage = (id, stage) => {
     setError("");
-    moveStageMutation.mutate({ id, stage, date: new Date().toISOString().slice(0, 10) });
+    moveStageMutation.mutate({ id, stage, date: today });
   };
 
   const saveLog = async () => {
-    const ll = landlords.find((l) => l.id === logFor);
+    const ll = [...queue, ...landlords].find((l) => l.id === logFor);
     setError("");
     setSaving(true);
     try {
@@ -104,18 +159,11 @@ export default function LandlordCRM() {
     }
   };
 
-  const today = new Date().toISOString().slice(0, 10);
-  const { sendQueue, contacted, conversations } = useMemo(() => ({
-    sendQueue: landlords.filter((l) => l.stage !== "won" && l.stage !== "lost" && (!l.next_action_date || l.next_action_date <= today)),
-    contacted: landlords.filter((l) => l.stage !== "not contacted").length,
-    conversations: landlords.filter((l) => ["conversation held", "property viewed", "negotiating", "won"].includes(l.stage)).length
-  }), [landlords, today]);
-
-  if (landlordsQuery.isLoading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
-  if (landlordsQuery.isError) return (
+  if (listQuery.isLoading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (listQuery.isError) return (
     <div className="space-y-4 py-10 text-center">
       <p className="text-brand-mutedtext">We couldn't load your landlords right now.</p>
-      <Button variant="outline" className="border-brand-line text-brand-text" onClick={() => landlordsQuery.refetch()}>Try again</Button>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={() => listQuery.refetch()}>Try again</Button>
     </div>
   );
 
@@ -124,7 +172,7 @@ export default function LandlordCRM() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-brand-text flex items-center gap-2"><Users className="w-6 h-6 text-brand-gold" /> Landlord CRM</h1>
-          <p className="text-brand-mutedtext text-sm">{contacted} contacted · {conversations} conversations this week (goal 10-15) · {landlords.length} total</p>
+          <p className="text-brand-mutedtext text-sm">{contacted} contacted · {conversations} conversations this week (goal 10-15) · {total} total</p>
         </div>
         <div className="flex gap-2">
           <div className="flex rounded-lg border border-brand-line p-0.5 bg-brand-raised">
@@ -140,7 +188,16 @@ export default function LandlordCRM() {
       <Card className="border-brand-gold/40 bg-brand-gold/10">
         <CardContent className="py-4">
           <div className="flex items-center gap-2 mb-2"><Send className="w-4 h-4 text-brand-gold" /><span className="text-sm font-semibold text-brand-text">Daily send queue</span></div>
-          {sendQueue.length === 0 ? <p className="text-sm text-brand-mutedtext">You're all caught up on follow-ups. Add new landlords to keep the pipeline warm.</p> : (
+          {queueQuery.isLoading ? (
+            <p className="text-sm text-brand-mutedtext">Loading today's work…</p>
+          ) : queueQuery.isError ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-brand-mutedtext">We couldn't load today's queue.</span>
+              <Button variant="link" className="text-brand-gold px-0 h-auto py-0" onClick={() => queueQuery.refetch()}>Retry</Button>
+            </div>
+          ) : sendQueue.length === 0 ? (
+            <p className="text-sm text-brand-mutedtext">You're all caught up on follow-ups. Add new landlords to keep the pipeline warm.</p>
+          ) : (
             <div className="flex gap-2 overflow-x-auto pb-1">
               {sendQueue.slice(0, 10).map((l) => (
                 <button key={l.id} onClick={() => setLogFor(l.id)} className="shrink-0 bg-brand-surface border border-brand-line rounded-lg px-3 py-2 text-left hover:border-brand-gold">
@@ -178,6 +235,14 @@ export default function LandlordCRM() {
         </div>
       ) : (
         <LandlordKanban landlords={landlords} stages={STAGES} onMove={moveStage} onLog={(id) => setLogFor(id)} />
+      )}
+
+      {listQuery.hasNextPage && (
+        <div className="flex justify-center pt-1">
+          <Button variant="outline" className="border-brand-line text-brand-text" onClick={() => listQuery.fetchNextPage()} disabled={listQuery.isFetchingNextPage}>
+            <ChevronDown className="w-4 h-4 mr-1" /> {listQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+          </Button>
+        </div>
       )}
 
       {(showAdd || logFor) && (
