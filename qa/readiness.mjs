@@ -304,6 +304,33 @@ for (const name of HOST_OWNED) {
   }
 }
 
+/* ── K. REACT QUERY CORRECTNESS ──────────────────────────────────────── */
+{
+  const RQ_PAGES = ['DealAnalyzer', 'MarketAnalyzer', 'LandlordCRM'];
+  for (const p of RQ_PAGES) {
+    const c = read(at(`src/pages/${p}.jsx`));
+    chk(/useQuery|useInfiniteQuery/.test(c), `K ${p}: reads via useQuery`);
+    chk(/useMutation/.test(c), `K ${p}: writes via useMutation`);
+    // TanStack v5: set/getQueryData take the key ARRAY. Passing a filters
+    // object writes to a phantom key, so optimistic updates silently no-op
+    // and error rollback restores undefined.
+    chk(!/(set|get)QueryData\(\s*\{/.test(c),
+      `K ${p}: set/getQueryData use the key array, not a filters object`);
+    // invalidate/cancel are the opposite: they DO take a filters object.
+    for (const m of ['invalidateQueries', 'cancelQueries']) {
+      const calls = c.match(new RegExp(`${m}\\(([^)]*)\\)`, 'g')) || [];
+      for (const call of calls)
+        chk(/\{\s*queryKey/.test(call), `K ${p}: ${m} passes a filters object`, call.slice(0, 60));
+    }
+  }
+  const crm = read(at('src/pages/LandlordCRM.jsx'));
+  chk(/queryKey:\s*\["landlords",\s*"queue"\]/.test(crm), 'K CRM: daily action queue is its own query');
+  chk(/useInfiniteQuery/.test(crm), 'K CRM: full list paginates incrementally');
+  chk(/queryKey:\s*\["landlords",\s*"metrics"\]/.test(crm), 'K CRM: metrics are a separate query');
+  chk(!/Landlord\.list\("-created_date",\s*(200|500|1000)\)/.test(crm),
+    'K CRM: no unbounded full-collection load');
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
