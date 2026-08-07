@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Users, Plus, Phone, Mail, Send, List, LayoutGrid, X } from "lucide-react";
+import LandlordKanban from "@/components/LandlordKanban";
 
 const STAGES = ["not contacted", "contacted", "responded", "conversation held", "property viewed", "negotiating", "won", "lost", "nurture"];
 const CHANNELS = ["email", "phone", "text", "in-person", "direct mail", "social"];
@@ -122,26 +123,7 @@ export default function LandlordCRM() {
           ))}
         </div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {STAGES.map((stage) => {
-            const items = landlords.filter((l) => l.stage === stage);
-            return (
-              <div key={stage} className="shrink-0 w-60">
-                <div className="text-xs font-semibold text-brand-mutedtext uppercase mb-2">{stage} ({items.length})</div>
-                <div className="space-y-2">
-                  {items.map((l) => (
-                    <Card key={l.id} className="border-brand-line cursor-pointer hover:border-brand-gold" onClick={() => setLogFor(l.id)}>
-                      <CardContent className="py-2.5">
-                        <div className="text-sm font-medium text-brand-text">{l.name}</div>
-                        <div className="text-xs text-brand-mutedtext">{l.type === "pm" ? "PM Co" : "Private"}{l.company ? ` · ${l.company}` : ""}</div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <LandlordKanban landlords={landlords} stages={STAGES} onMove={moveStage} onLog={(id) => setLogFor(id)} />
       )}
 
       {(showAdd || logFor) && (
