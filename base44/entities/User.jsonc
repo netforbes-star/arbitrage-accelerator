@@ -15,6 +15,7 @@
       "type": "string"
     }
   },
+  "required": [],
   "rls": {
     "read": {
       "$or": [
