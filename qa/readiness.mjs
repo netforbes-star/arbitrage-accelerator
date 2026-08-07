@@ -120,7 +120,8 @@ for (const name of HOST_OWNED) {
 {
   const app = read(at('src/App.jsx'));
   chk(app.includes('RoleRoute') && app.includes('AdminPanel'), 'C1 admin route wrapped in RoleRoute');
-  chk(/allow=\{\['coach', ?'admin'\]\}/.test(app), 'C2 coach route role-gated');
+  chk(/allow=\{STAFF_ROLES\}/.test(app), 'C2 staff routes gated by the shared STAFF_ROLES list');
+  chk((app.match(/RoleRoute allow=\{STAFF_ROLES\}/g) || []).length >= 2, 'C2b both staff areas gated');
   chk(app.includes('ProtectedRoute'), 'C3 authenticated shell present');
   const t = app.indexOf('path="/terms"'), p = app.indexOf('<Route element={<ProtectedRoute');
   chk(t > -1 && t < p, 'C4 /terms readable before signing in');
