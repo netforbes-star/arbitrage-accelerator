@@ -7,7 +7,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import ProgressRing from "@/components/ProgressRing";
 import { getCurrentDay, daysRemaining, dayDate, WEEK_THEMES } from "@/lib/curriculum";
-import { Users, MessageSquare, Calculator, Handshake, CheckCircle2, Clock, ArrowRight, LifeBuoy } from "lucide-react";
+import { Users, MessageSquare, Calculator, Handshake, CheckCircle2, Clock, ArrowRight, LifeBuoy, Download } from "lucide-react";
+import { downloadAll } from "@/lib/exportData";
+import { logAudit } from "@/lib/audit";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
@@ -16,6 +19,21 @@ export default function Dashboard() {
   const [deals, setDeals] = useState([]);
   const [landlords, setLandlords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const total = await downloadAll();
+      await logAudit("data_export", `all datasets (${total} records)`);
+      toast({ title: "Export ready", description: `${total} record${total === 1 ? "" : "s"} exported.` });
+    } catch (e) {
+      toast({ title: "Export failed", description: e.message || "Please try again." });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -121,6 +139,14 @@ export default function Dashboard() {
         <Metric icon={MessageSquare} value={conversations} goal="10-15" label="Conversations this week" />
         <Metric icon={Calculator} value={dealsUnderwritten} goal="8-10" label="Deals underwritten" />
         <Metric icon={Handshake} value={dealsNegotiating} goal="—" label="Deals in negotiation" />
+        <Button
+          onClick={handleExport}
+          disabled={exporting}
+          className="col-span-2 lg:col-span-4 bg-brand-gold text-brand-ink hover:bg-brand-gold/90 h-11"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {exporting ? "Preparing…" : "Download my data"}
+        </Button>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">

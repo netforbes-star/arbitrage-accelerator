@@ -25,6 +25,7 @@ import CoachConsole from '@/pages/CoachConsole';
 import AdminPanel from '@/pages/AdminPanel';
 import Graduation from '@/pages/Graduation';
 import Terms from '@/pages/Terms';
+import ExportData from '@/pages/ExportData';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
           <Route path="/markets" element={<MarketAnalyzer />} />
           <Route path="/landlords" element={<LandlordCRM />} />
           <Route path="/templates" element={<TemplateVault />} />
+          <Route path="/export" element={<ExportData />} />
           <Route path="/graduation" element={<Graduation />} />
           <Route element={<RoleRoute allow={['coach', 'admin']} />}>
             <Route path="/coach" element={<CoachConsole />} />
