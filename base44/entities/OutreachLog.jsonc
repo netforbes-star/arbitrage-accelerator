@@ -3,7 +3,8 @@
   "type": "object",
   "properties": {
     "landlord_id": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 64
     },
     "landlord_name": {
       "type": "string",
