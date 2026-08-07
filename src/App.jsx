@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -16,17 +17,27 @@ import ResetPassword from '@/pages/ResetPassword';
 import Layout from '@/components/Layout';
 import Home from '@/pages/Home';
 import Onboarding from '@/pages/Onboarding';
-import Dashboard from '@/pages/Dashboard';
-import Program from '@/pages/Program';
-import DealAnalyzer from '@/pages/DealAnalyzer';
-import MarketAnalyzer from '@/pages/MarketAnalyzer';
-import LandlordCRM from '@/pages/LandlordCRM';
-import TemplateVault from '@/pages/TemplateVault';
-import CoachConsole from '@/pages/CoachConsole';
-import AdminPanel from '@/pages/AdminPanel';
-import Graduation from '@/pages/Graduation';
 import Terms from '@/pages/Terms';
-import ExportData from '@/pages/ExportData';
+
+// Route-level code splitting: heavy secondary screens load on demand so the
+// initial authenticated shell (Home + nav) stays fast. The auth guards
+// (ProtectedRoute / RoleRoute) remain eager and fully evaluate before a lazy
+// screen ever mounts, so route protection is unchanged.
+const Program = lazy(() => import('@/pages/Program'));
+const DealAnalyzer = lazy(() => import('@/pages/DealAnalyzer'));
+const MarketAnalyzer = lazy(() => import('@/pages/MarketAnalyzer'));
+const LandlordCRM = lazy(() => import('@/pages/LandlordCRM'));
+const TemplateVault = lazy(() => import('@/pages/TemplateVault'));
+const CoachConsole = lazy(() => import('@/pages/CoachConsole'));
+const AdminPanel = lazy(() => import('@/pages/AdminPanel'));
+const Graduation = lazy(() => import('@/pages/Graduation'));
+const ExportData = lazy(() => import('@/pages/ExportData'));
+
+const RouteFallback = () => (
+  <div className="fixed inset-0 flex items-center justify-center bg-brand-ink">
+    <div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin"></div>
+  </div>
+);
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -55,18 +66,18 @@ const AuthenticatedApp = () => {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/program" element={<Program />} />
-          <Route path="/deals" element={<DealAnalyzer />} />
-          <Route path="/markets" element={<MarketAnalyzer />} />
-          <Route path="/landlords" element={<LandlordCRM />} />
-          <Route path="/templates" element={<TemplateVault />} />
-          <Route path="/export" element={<ExportData />} />
-          <Route path="/graduation" element={<Graduation />} />
+          <Route path="/program" element={<Suspense fallback={<RouteFallback />}><Program /></Suspense>} />
+          <Route path="/deals" element={<Suspense fallback={<RouteFallback />}><DealAnalyzer /></Suspense>} />
+          <Route path="/markets" element={<Suspense fallback={<RouteFallback />}><MarketAnalyzer /></Suspense>} />
+          <Route path="/landlords" element={<Suspense fallback={<RouteFallback />}><LandlordCRM /></Suspense>} />
+          <Route path="/templates" element={<Suspense fallback={<RouteFallback />}><TemplateVault /></Suspense>} />
+          <Route path="/export" element={<Suspense fallback={<RouteFallback />}><ExportData /></Suspense>} />
+          <Route path="/graduation" element={<Suspense fallback={<RouteFallback />}><Graduation /></Suspense>} />
           <Route element={<RoleRoute allow={STAFF_ROLES} />}>
-            <Route path="/coach" element={<CoachConsole />} />
+            <Route path="/coach" element={<Suspense fallback={<RouteFallback />}><CoachConsole /></Suspense>} />
           </Route>
           <Route element={<RoleRoute allow={STAFF_ROLES} />}>
-            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin" element={<Suspense fallback={<RouteFallback />}><AdminPanel /></Suspense>} />
           </Route>
         </Route>
       </Route>
