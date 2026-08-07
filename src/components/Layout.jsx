@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { STAFF_ROLES, isStaff } from "@/lib/roles";
+import { STAFF_ROLES } from "@/lib/roles";
 import { base44 } from "@/api/base44Client";
 import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, MapPin, Users, FileText, ClipboardList, Shield, LogOut, Download } from "lucide-react";
 
