@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Calculator, Plus, CheckCircle2, XCircle, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Calculator, CheckCircle2, XCircle, Pencil, Trash2, AlertTriangle } from "lucide-react";
 
 const EMPTY = {
   nickname: "", beds: 2, baths: 1, monthly_rent: "", utilities: "", furnishing_cost: "",
