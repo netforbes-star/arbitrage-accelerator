@@ -50,15 +50,26 @@ function UsersTab() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [edits, setEdits] = useState({});
+  const [loadError, setLoadError] = useState(false);
+  const [error, setError] = useState("");
+  const [savingId, setSavingId] = useState(null);
 
   const load = async () => {
-    const [u, p] = await Promise.all([
-      base44.entities.User.list("-created_date", 200),
-      base44.entities.OnboardingProfile.list("-created_date", 200)
-    ]);
-    setUsers(u);
-    setProfiles(p);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const [u, p] = await Promise.all([
+        base44.entities.User.list("-created_date", 200),
+        base44.entities.OnboardingProfile.list("-created_date", 200)
+      ]);
+      setUsers(u);
+      setProfiles(p);
+    } catch (e) {
+      console.error("Users load failed", e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -70,14 +81,29 @@ function UsersTab() {
     const oldRole = u.role;
     const newRole = patch.role || oldRole;
     const cohort = patch.cohort !== undefined ? patch.cohort : u.cohort;
-    await base44.entities.User.update(u.id, { role: newRole, cohort });
-    // No coach assignment: there is one coach, and staff see every host.
-    if (newRole !== oldRole) logAudit("role_change", `Changed ${u.email} role from ${oldRole} to ${newRole}`, u.email);
-    setEdits((e) => ({ ...e, [u.id]: {} }));
-    load();
+    setError("");
+    setSavingId(u.id);
+    try {
+      await base44.entities.User.update(u.id, { role: newRole, cohort });
+      // No coach assignment: there is one coach, and staff see every host.
+      if (newRole !== oldRole) logAudit("role_change", `Changed ${u.email} role from ${oldRole} to ${newRole}`, u.email);
+      setEdits((e) => ({ ...e, [u.id]: {} }));
+      load();
+    } catch (e) {
+      console.error("User update failed", e);
+      setError("We couldn't save this user yet. Please try again.");
+    } finally {
+      setSavingId(null);
+    }
   };
 
   if (loading) return <Spinner />;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load users right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
 
   const coaches = users.filter((u) => u.role === "coach");
 
@@ -85,6 +111,7 @@ function UsersTab() {
     <Card className="border-brand-line">
       <CardHeader><CardTitle className="text-brand-text text-lg">Users ({users.length})</CardTitle></CardHeader>
       <CardContent className="space-y-3">
+        {error && <div className="p-3 rounded-lg bg-red-500/10 text-red-400 text-sm">{error}</div>}
         <p className="text-xs text-brand-mutedtext">Note: passwords and authentication credentials are never shown or editable here.</p>
         {users.map((u) => {
           const prof = profileFor(u.id);
@@ -111,7 +138,7 @@ function UsersTab() {
                   <Input className="h-8 text-xs" value={e.cohort !== undefined ? e.cohort : (u.cohort || "")} onChange={(ev) => setField(u.id, "cohort", ev.target.value)} />
                 </div>
               </div>
-              <Button size="sm" className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90 mt-2" onClick={() => saveUser(u)}><Save className="w-3 h-3 mr-1" /> Save</Button>
+              <Button size="sm" className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90 mt-2" onClick={() => saveUser(u)} disabled={savingId === u.id}>{savingId === u.id ? "Saving…" : <><Save className="w-3 h-3 mr-1" /> Save</>}</Button>
             </div>
           );
         })}
@@ -124,21 +151,47 @@ function CurriculumTab() {
   const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const d = await base44.entities.ProgramDay.list("day", 50);
-    setDays(d.sort((a, b) => a.day - b.day));
-    setLoading(false);
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const d = await base44.entities.ProgramDay.list("day", 50);
+      setDays(d.sort((a, b) => a.day - b.day));
+    } catch (e) {
+      console.error("Curriculum load failed", e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
   const save = async () => {
-    await base44.entities.ProgramDay.update(edit.id, { title: edit.title, why_it_matters: edit.why_it_matters });
-    setEdit(null);
-    load();
+    setError("");
+    setSaving(true);
+    try {
+      await base44.entities.ProgramDay.update(edit.id, { title: edit.title, why_it_matters: edit.why_it_matters });
+      setEdit(null);
+      load();
+    } catch (e) {
+      console.error("Curriculum save failed", e);
+      setError("We couldn't save this yet. Your edits are still here — please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) return <Spinner />;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load the curriculum right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
   return (
     <Card className="border-brand-line">
       <CardHeader><CardTitle className="text-brand-text text-lg">Curriculum ({days.length} days)</CardTitle></CardHeader>
@@ -155,7 +208,8 @@ function CurriculumTab() {
               <h3 className="font-semibold text-brand-text">Edit Day {edit.day}</h3>
               <div><Label className="text-xs text-brand-mutedtext">Title</Label><Input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></div>
               <div><Label className="text-xs text-brand-mutedtext">Why this matters</Label><Textarea rows={3} value={edit.why_it_matters} onChange={(e) => setEdit({ ...edit, why_it_matters: e.target.value })} /></div>
-              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save}>Save</Button></div>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button></div>
             </div>
           </div>
         )}
@@ -168,10 +222,44 @@ function TemplatesTab() {
   const [templates, setTemplates] = useState([]);
   const [edit, setEdit] = useState(null);
   const [loading, setLoading] = useState(true);
-  const load = async () => { const t = await base44.entities.Template.list("title", 50); setTemplates(t); setLoading(false); };
+  const [loadError, setLoadError] = useState(false);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const load = async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const t = await base44.entities.Template.list("title", 50);
+      setTemplates(t);
+    } catch (e) {
+      console.error("Templates load failed", e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => { load(); }, []);
-  const save = async () => { await base44.entities.Template.update(edit.id, { content: edit.content, title: edit.title }); setEdit(null); load(); };
+  const save = async () => {
+    setError("");
+    setSaving(true);
+    try {
+      await base44.entities.Template.update(edit.id, { content: edit.content, title: edit.title });
+      setEdit(null);
+      load();
+    } catch (e) {
+      console.error("Template save failed", e);
+      setError("We couldn't save this yet. Your edits are still here — please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
   if (loading) return <Spinner />;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load templates right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
   return (
     <Card className="border-brand-line">
       <CardHeader><CardTitle className="text-brand-text text-lg">Templates ({templates.length})</CardTitle></CardHeader>
@@ -188,7 +276,8 @@ function TemplatesTab() {
               <h3 className="font-semibold text-brand-text">Edit template</h3>
               <div><Label className="text-xs text-brand-mutedtext">Title</Label><Input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></div>
               <div><Label className="text-xs text-brand-mutedtext">Content (Markdown)</Label><Textarea rows={12} className="font-mono text-xs" value={edit.content} onChange={(e) => setEdit({ ...edit, content: e.target.value })} /></div>
-              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save}>Save</Button></div>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button></div>
             </div>
           </div>
         )}
@@ -199,8 +288,10 @@ function TemplatesTab() {
 
 function AnalyticsTab() {
   const [data, setData] = useState(null);
-  useEffect(() => {
-    (async () => {
+  const [loadError, setLoadError] = useState(false);
+  const load = async () => {
+    setLoadError(false);
+    try {
       const [users, profiles, deals, landlords, progress] = await Promise.all([
         base44.entities.User.list("-created_date", 200),
         base44.entities.OnboardingProfile.list("-created_date", 200),
@@ -209,9 +300,19 @@ function AnalyticsTab() {
         base44.entities.UserTaskProgress.list("-created_date", 200)
       ]);
       setData({ users, profiles, deals, landlords, progress });
-    })();
-  }, []);
-  if (!data) return <Spinner />;
+    } catch (e) {
+      console.error("Analytics load failed", e);
+      setLoadError(true);
+    }
+  };
+  useEffect(() => { load(); }, []);
+  if (!data && !loadError) return <Spinner />;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load analytics right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
   const hosts = data.users.filter((u) => u.role === "host");
   const signed = data.deals.filter((d) => d.status === "lease signed").length;
   const avgProgress = data.progress.length ? Math.round((data.progress.filter((p) => p.status === "complete").length / data.progress.length) * 100) : 0;

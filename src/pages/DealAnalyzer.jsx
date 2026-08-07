@@ -27,11 +27,20 @@ export default function DealAnalyzer() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
-    const d = await base44.entities.Deal.list("-created_date", 100);
-    setDeals(d);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const d = await base44.entities.Deal.list("-created_date", 100);
+      setDeals(d);
+    } catch (e) {
+      console.error("Deal load failed", e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -102,9 +111,24 @@ export default function DealAnalyzer() {
     setForm({ ...EMPTY, ...d, occupancy: d.occupancy ?? "0.6", conservatism_haircut: d.conservatism_haircut ?? "0.15" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  const remove = async (id) => { await base44.entities.Deal.delete(id); load(); };
+  const remove = async (id) => {
+    setError("");
+    try {
+      await base44.entities.Deal.delete(id);
+      load();
+    } catch (e) {
+      console.error("Deal delete failed", e);
+      setError("We couldn't remove this record. Nothing was changed — please try again.");
+    }
+  };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load your deals right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
   const pass = result.verdict === "PASS";
 
   return (

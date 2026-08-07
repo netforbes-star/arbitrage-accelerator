@@ -14,28 +14,66 @@ export default function CoachConsole() {
   const [detail, setDetail] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const [sending, setSending] = useState(false);
 
   const load = async () => {
-    const p = await base44.entities.OnboardingProfile.list("-created_date", 200);
-    setProfiles(p);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const p = await base44.entities.OnboardingProfile.list("-created_date", 200);
+      setProfiles(p);
+    } catch (e) {
+      console.error("Coach profiles load failed", e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
   const openHost = async (p) => {
     setSelected(p);
     setDetail(null);
+    setDetailError("");
     logAudit("coach_viewed_host", `Viewed host ${p.created_by} (${p.target_market_city})`, p.created_by);
-    const [progress, deals, landlords, fb] = await Promise.all([
-      base44.entities.UserTaskProgress.filter({ created_by_id: p.created_by_id }),
-      base44.entities.Deal.filter({ created_by_id: p.created_by_id }),
-      base44.entities.Landlord.filter({ created_by_id: p.created_by_id }),
-      base44.entities.CoachFeedback.filter({ host_id: p.created_by_id })
-    ]);
-    setDetail({ progress, deals, landlords, feedback: fb });
+    try {
+      const [progress, deals, landlords, fb] = await Promise.all([
+        base44.entities.UserTaskProgress.filter({ created_by_id: p.created_by_id }),
+        base44.entities.Deal.filter({ created_by_id: p.created_by_id }),
+        base44.entities.Landlord.filter({ created_by_id: p.created_by_id }),
+        base44.entities.CoachFeedback.filter({ host_id: p.created_by_id })
+      ]);
+      setDetail({ progress, deals, landlords, feedback: fb });
+    } catch (e) {
+      console.error("Coach host detail load failed", e);
+      setDetailError("We couldn't load this host's details right now. Please try again.");
+    }
+  };
+
+  const sendFeedback = async (p) => {
+    setDetailError("");
+    setSending(true);
+    try {
+      await base44.entities.CoachFeedback.create({ host_id: p.created_by_id, host_name: p.created_by, message: feedback, section: "general" });
+      setFeedback("");
+      openHost(p);
+    } catch (e) {
+      console.error("Coach feedback failed", e);
+      setDetailError("We couldn't send this feedback yet. Your message is still here — please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load your hosts right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
 
   if (selected) {
     const p = selected;
@@ -94,7 +132,8 @@ export default function CoachConsole() {
               <div key={f.id} className="text-sm text-brand-mutedtext border-l-2 border-brand-gold pl-3">{f.message}<div className="text-xs text-brand-mutedtext mt-0.5">{f.created_date?.slice(0, 10)}</div></div>
             ))}
             <Textarea rows={3} value={feedback} onChange={(e) => setFeedback(e.target.value)} placeholder="Encouraging, specific feedback…" />
-            <Button className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90" disabled={!feedback} onClick={async () => { await base44.entities.CoachFeedback.create({ host_id: p.created_by_id, host_name: p.created_by, message: feedback, section: "general" }); setFeedback(""); openHost(p); }}><Send className="w-4 h-4 mr-1" /> Send feedback</Button>
+            {detailError && <p className="text-sm text-red-400">{detailError}</p>}
+            <Button className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90" disabled={!feedback || sending} onClick={() => sendFeedback(p)}>{sending ? "Sending…" : <><Send className="w-4 h-4 mr-1" /> Send feedback</>}</Button>
           </CardContent>
         </Card>
       </div>

@@ -29,6 +29,7 @@ export default function Onboarding({ existingProfile }) {
   });
   const [checks, setChecks] = useState({});
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const allChecked = ACKNOWLEDGEMENTS.every((a) => checks[a.key]);
@@ -40,6 +41,7 @@ export default function Onboarding({ existingProfile }) {
   });
 
   const submitReality = async () => {
+    setError("");
     setSaving(true);
     try {
       if (existingProfile) {
@@ -57,6 +59,9 @@ export default function Onboarding({ existingProfile }) {
       }
       await logAudit("terms_accepted", `version ${TERMS_VERSION}`);
       navigate("/");
+    } catch (e) {
+      console.error("Onboarding save failed", e);
+      setError("We couldn't save this yet. Your information is still on this screen — please try again.");
     } finally {
       setSaving(false);
     }
@@ -163,6 +168,7 @@ export default function Onboarding({ existingProfile }) {
               {saving ? "Saving…" : existingProfile ? "I confirm — take me to my dashboard" : "Accept & generate my 28-day calendar"}
               {!saving && <ArrowRight className="w-4 h-4 ml-2" />}
             </Button>
+            {error && <p className="text-sm text-red-400 text-center">{error}</p>}
             {!allChecked && <p className="text-xs text-brand-mutedtext text-center">Every box needs a tick to continue.</p>}
           </CardContent>
         </Card>

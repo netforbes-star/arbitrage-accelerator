@@ -22,13 +22,22 @@ export default function LandlordCRM() {
   const [logFor, setLogFor] = useState(null);
   const [form, setForm] = useState({ name: "", company: "", type: "private", stage: "not contacted", email: "", phone: "", notes: "", next_action_date: "" });
   const [log, setLog] = useState({ channel: "email", template: "", outcome: "" });
+  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const [ll] = await Promise.all([
-      base44.entities.Landlord.list("-created_date", 300)
-    ]);
-    setLandlords(ll);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const ll = await base44.entities.Landlord.list("-created_date", 300);
+      setLandlords(ll);
+    } catch (e) {
+      console.error("Landlord load failed", e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -36,30 +45,61 @@ export default function LandlordCRM() {
 
   const addLandlord = async () => {
     if (!form.name) return;
-    await base44.entities.Landlord.create({ ...form });
-    setForm({ name: "", company: "", type: "private", stage: "not contacted", email: "", phone: "", notes: "", next_action_date: "" });
-    setShowAdd(false);
-    load();
+    setError("");
+    setSaving(true);
+    try {
+      await base44.entities.Landlord.create({ ...form });
+      setForm({ name: "", company: "", type: "private", stage: "not contacted", email: "", phone: "", notes: "", next_action_date: "" });
+      setShowAdd(false);
+      load();
+    } catch (e) {
+      console.error("Landlord create failed", e);
+      setError("We couldn't save this yet. Your information is still on this screen — please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const moveStage = async (id, stage) => {
-    await base44.entities.Landlord.update(id, { stage, last_contact_date: new Date().toISOString().slice(0, 10) });
-    load();
+    setError("");
+    try {
+      await base44.entities.Landlord.update(id, { stage, last_contact_date: new Date().toISOString().slice(0, 10) });
+      load();
+    } catch (e) {
+      console.error("Landlord stage update failed", e);
+      setError("We couldn't update this landlord's stage. Please try again.");
+      load();
+    }
   };
 
   const saveLog = async () => {
     const ll = landlords.find((l) => l.id === logFor);
-    await base44.entities.OutreachLog.create({
-      landlord_id: logFor, landlord_name: ll?.name || "", channel: log.channel, template: log.template, outcome: log.outcome,
-      date: new Date().toISOString().slice(0, 10)
-    });
-    if (ll && ll.stage === "not contacted") await base44.entities.Landlord.update(logFor, { stage: "contacted", last_contact_date: new Date().toISOString().slice(0, 10) });
-    setLogFor(null);
-    setLog({ channel: "email", template: "", outcome: "" });
-    load();
+    setError("");
+    setSaving(true);
+    try {
+      await base44.entities.OutreachLog.create({
+        landlord_id: logFor, landlord_name: ll?.name || "", channel: log.channel, template: log.template, outcome: log.outcome,
+        date: new Date().toISOString().slice(0, 10)
+      });
+      if (ll && ll.stage === "not contacted") await base44.entities.Landlord.update(logFor, { stage: "contacted", last_contact_date: new Date().toISOString().slice(0, 10) });
+      setLogFor(null);
+      setLog({ channel: "email", template: "", outcome: "" });
+      load();
+    } catch (e) {
+      console.error("Outreach log failed", e);
+      setError("We couldn't save this yet. Your information is still on this screen — please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load your landlords right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
 
   const today = new Date().toISOString().slice(0, 10);
   const sendQueue = landlords.filter((l) => l.stage !== "won" && l.stage !== "lost" && (!l.next_action_date || l.next_action_date <= today));
@@ -81,6 +121,8 @@ export default function LandlordCRM() {
           <Button className="bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={() => setShowAdd(true)}><Plus className="w-4 h-4 mr-1" /> Add</Button>
         </div>
       </div>
+
+      {error && <div className="p-3 rounded-lg bg-red-500/10 text-red-400 text-sm">{error}</div>}
 
       <Card className="border-brand-gold/40 bg-brand-gold/10">
         <CardContent className="py-4">
@@ -143,7 +185,7 @@ export default function LandlordCRM() {
                   </div>
                   <Field label="Next action date"><Input type="date" value={form.next_action_date} onChange={(e) => set("next_action_date", e.target.value)} /></Field>
                   <Field label="Notes"><Textarea rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
-                  <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={addLandlord}>Add landlord</Button>
+                  <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={addLandlord} disabled={saving}>{saving ? "Saving…" : "Add landlord"}</Button>
                 </div>
               </>
             ) : (
@@ -155,7 +197,7 @@ export default function LandlordCRM() {
                     <Field label="Template used"><Input value={log.template} onChange={(e) => setLog((l) => ({ ...l, template: e.target.value }))} placeholder="e.g. Initial email" /></Field>
                   </div>
                   <Field label="Outcome"><Textarea rows={3} value={log.outcome} onChange={(e) => setLog((l) => ({ ...l, outcome: e.target.value }))} placeholder="What happened?" /></Field>
-                  <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={saveLog}><Phone className="w-4 h-4 mr-1" /> Log touch</Button>
+                  <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={saveLog} disabled={saving}>{saving ? "Saving…" : <><Phone className="w-4 h-4 mr-1" /> Log touch</>}</Button>
                 </div>
               </>
             )}

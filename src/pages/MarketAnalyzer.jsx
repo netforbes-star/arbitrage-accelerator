@@ -30,11 +30,21 @@ export default function MarketAnalyzer() {
   const [form, setForm] = useState({ ...EMPTY });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
-    const m = await base44.entities.Market.list("-created_date", 100);
-    setMarkets(m);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const m = await base44.entities.Market.list("-created_date", 100);
+      setMarkets(m);
+    } catch (e) {
+      console.error("Market load failed", e);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -42,6 +52,7 @@ export default function MarketAnalyzer() {
   const result = useMemo(() => analyzeMarket(form), [form]);
 
   const save = async () => {
+    setError("");
     setSaving(true);
     let calc;
     try {
@@ -57,26 +68,49 @@ export default function MarketAnalyzer() {
       });
       calc = res.data;
     } catch (e) {
+      console.error("Market analysis failed", e);
+      setError("We couldn't finish the analysis right now. Your inputs are still here — please try again.");
       setSaving(false);
       return;
     }
-    await base44.entities.Market.create({
-      ...form,
-      adr: Number(form.adr) || 0, occupancy_rate: Number(form.occupancy_rate) || 0, revpar: Number(form.revpar) || 0,
-      active_listings: Number(form.active_listings) || 0, comp_count: Number(form.comp_count) || 0,
-      comp_revenue_low: Number(form.comp_revenue_low) || 0, comp_revenue_median: Number(form.comp_revenue_median) || 0,
-      comp_revenue_high: Number(form.comp_revenue_high) || 0, average_market_rent: Number(form.average_market_rent) || 0,
-      arbitrage_spread: calc.arbitrage_spread, spread_ratio: calc.spread_ratio, composite_score: calc.composite_score,
-      recommendation: calc.recommendation, stale_data_flag: calc.stale_data_flag, thin_market_flag: calc.thin_market_flag
-    });
-    setForm({ ...EMPTY });
-    load();
-    setSaving(false);
+    try {
+      await base44.entities.Market.create({
+        ...form,
+        adr: Number(form.adr) || 0, occupancy_rate: Number(form.occupancy_rate) || 0, revpar: Number(form.revpar) || 0,
+        active_listings: Number(form.active_listings) || 0, comp_count: Number(form.comp_count) || 0,
+        comp_revenue_low: Number(form.comp_revenue_low) || 0, comp_revenue_median: Number(form.comp_revenue_median) || 0,
+        comp_revenue_high: Number(form.comp_revenue_high) || 0, average_market_rent: Number(form.average_market_rent) || 0,
+        arbitrage_spread: calc.arbitrage_spread, spread_ratio: calc.spread_ratio, composite_score: calc.composite_score,
+        recommendation: calc.recommendation, stale_data_flag: calc.stale_data_flag, thin_market_flag: calc.thin_market_flag
+      });
+      setForm({ ...EMPTY });
+      load();
+    } catch (e) {
+      console.error("Market save failed", e);
+      setError("We couldn't save this yet. Your information is still on this screen — please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const remove = async (id) => { await base44.entities.Market.delete(id); load(); };
+  const remove = async (id) => {
+    setError("");
+    try {
+      await base44.entities.Market.delete(id);
+      load();
+    } catch (e) {
+      console.error("Market delete failed", e);
+      setError("We couldn't remove this record. Nothing was changed — please try again.");
+    }
+  };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (loadError) return (
+    <div className="space-y-4 py-10 text-center">
+      <p className="text-brand-mutedtext">We couldn't load your markets right now.</p>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+    </div>
+  );
 
   const rec = result.recommendation;
   const rs = REC_STYLES[rec];
@@ -124,6 +158,7 @@ export default function MarketAnalyzer() {
               <Field label="Regulation source URL"><Input value={form.regulation_source_url} onChange={(e) => set("regulation_source_url", e.target.value)} placeholder="city.gov/short-term-rentals" /></Field>
             </div>
             <Field label="Regulation evidence URL (screenshot)"><Input value={form.regulation_evidence_url} onChange={(e) => set("regulation_evidence_url", e.target.value)} /></Field>
+            {error && <div className="p-3 rounded-lg bg-red-500/10 text-red-400 text-sm">{error}</div>}
             <Button onClick={save} disabled={saving || !form.city} className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90"><Plus className="w-4 h-4 mr-1" /> {saving ? "Saving…" : "Save market"}</Button>
           </CardContent>
         </Card>
