@@ -3,17 +3,21 @@
   "type": "object",
   "properties": {
     "title": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 120
     },
     "category": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 60
     },
     "content": {
       "type": "string",
+      "maxLength": 8000,
       "description": "Markdown content with {{variables}}"
     },
     "variables": {
       "type": "string",
+      "maxLength": 500,
       "description": "Comma-separated variable hints"
     }
   },

@@ -1,60 +1,58 @@
 {
-  // SINGLE-COACH MODEL.
-  //
-  // read/update/delete : the host who owns the record, or staff.
-  // create             : the host only, with ownership pinned server-side.
-  //
-  // "Staff" is the one business owner, whose account may carry either the
-  // `coach` or the `admin` role — they are treated identically. There is no
-  // per-host coach assignment, because there is one coach.
-  //
-  // The former `data.coach_id` read clause was removed. It existed only to
-  // route hosts to different coaches, and it was host-writable, so a host
-  // could set it to an arbitrary user id and grant that stranger read access
-  // to their own record. Nothing grants access by a field the host controls.
-  //
-  // `coach_id` is retained on the schema for backwards compatibility with
-  // records already written. Nothing reads it. Candidate for removal.
-
   "name": "Market",
   "type": "object",
   "properties": {
     "city": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 120
     },
     "state": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 60
     },
     "submarket": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 120
     },
     "adr": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "description": "Average daily rate in USD"
     },
     "occupancy_rate": {
       "type": "number",
+      "minimum": 0,
+      "maximum": 100,
       "description": "0-100"
     },
     "revpar": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "description": "Revenue per available room in USD"
     },
     "active_listings": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "comp_count": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "comp_revenue_low": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "comp_revenue_median": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "comp_revenue_high": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "average_market_rent": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "regulation_status": {
       "type": "string",
@@ -67,23 +65,32 @@
       "default": "pending"
     },
     "regulation_source_url": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^$|^https?://.+",
+      "maxLength": 2048
     },
     "regulation_evidence_url": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^$|^https?://.+",
+      "maxLength": 2048
     },
     "data_pulled_date": {
       "type": "string",
       "format": "date"
     },
     "arbitrage_spread": {
-      "type": "number"
+      "type": "number",
+      "description": "Can be negative"
     },
     "spread_ratio": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "composite_score": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "0-100 composite"
     },
     "recommendation": {
       "type": "string",
@@ -94,7 +101,8 @@
       ]
     },
     "summary": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 2000
     },
     "stale_data_flag": {
       "type": "boolean"

@@ -1,54 +1,56 @@
 {
-  // SINGLE-COACH MODEL + SERVER-ENFORCED WORKFLOW.
-  //
-  // read   : the host who owns the deal, or staff.
-  // create : the host only, ownership pinned server-side. The saveDeal backend
-  //          function creates through the *user-scoped* client precisely so
-  //          created_by_id lands on the real owner.
-  // update : NOBODY from the browser. Gated on a role that does not exist, so
-  //          every edit must go through the saveDeal backend function, which
-  //          updates via asServiceRole. This is what makes the status rules
-  //          unbypassable — without it a host could PATCH the entity directly
-  //          and set status to "lease signed" with no permission artifact.
-  // delete : the host who owns the deal, or staff.
-  //
-  // `coach_id` is retained for backwards compatibility. Nothing reads it.
-
   "name": "Deal",
   "type": "object",
   "properties": {
     "nickname": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 120
     },
     "beds": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "baths": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "monthly_rent": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "utilities": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "furnishing_cost": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "deposit": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "drive_time_minutes": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "location_score": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "1-10 (0 = not yet scored)"
     },
     "size_score": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "1-10 (0 = not yet scored)"
     },
     "condition_score": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "1-10 (0 = not yet scored)"
     },
     "revenue_mode": {
       "type": "string",
@@ -59,24 +61,34 @@
       "default": "nightly"
     },
     "nightly_adr": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "monthly_str_revenue": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "occupancy": {
       "type": "number",
-      "default": 0.6
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.6,
+      "description": "0-1 fraction"
     },
     "conservatism_haircut": {
       "type": "number",
-      "default": 0.15
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.15,
+      "description": "0-1 fraction"
     },
     "haircut_override_reason": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 500
     },
     "mtr_revenue_estimate": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "permission_type": {
       "type": "string",
@@ -89,31 +101,44 @@
       "default": "none"
     },
     "permission_artifact_url": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^$|^https?://.+",
+      "maxLength": 2048
     },
     "gross_revenue": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "variable_costs": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "furniture_reserve": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
     },
     "cash_profit": {
-      "type": "number"
+      "type": "number",
+      "description": "Can be negative"
     },
     "true_profit": {
-      "type": "number"
+      "type": "number",
+      "description": "Can be negative"
     },
     "profit_margin_pct": {
-      "type": "number"
+      "type": "number",
+      "description": "Can be negative"
     },
     "months_to_recoup": {
-      "type": "number"
+      "type": "number",
+      "description": "Null when cash profit <= 0"
     },
     "recommended_strategy": {
-      "type": "string"
+      "type": "string",
+      "enum": [
+        "Mid-Term Rental (MTR)",
+        "Short-Term Rental (STR)"
+      ]
     },
     "verdict": {
       "type": "string",
@@ -124,7 +149,8 @@
       ]
     },
     "fail_fix": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 1000
     },
     "status": {
       "type": "string",

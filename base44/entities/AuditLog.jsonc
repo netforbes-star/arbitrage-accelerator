@@ -3,25 +3,32 @@
   "type": "object",
   "properties": {
     "actor_email": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 254
     },
     "actor_role": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 60
     },
     "action": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 200
     },
     "target_user_email": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 320
     },
     "target_type": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 100
     },
     "target_id": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 200
     },
     "details": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 2000
     }
   },
   "required": [

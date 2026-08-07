@@ -12,7 +12,8 @@
       "default": "host"
     },
     "cohort": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 60
     }
   },
   "required": [],

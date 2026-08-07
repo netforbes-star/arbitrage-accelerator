@@ -7,13 +7,16 @@
       "description": "The host being reviewed"
     },
     "host_name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 120
     },
     "message": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 2000
     },
     "section": {
       "type": "string",
+      "maxLength": 60,
       "description": "Which area the feedback relates to"
     }
   },

@@ -1,21 +1,4 @@
 {
-  // SINGLE-COACH MODEL.
-  //
-  // read/update/delete : the host who owns the record, or staff.
-  // create             : the host only, with ownership pinned server-side.
-  //
-  // "Staff" is the one business owner, whose account may carry either the
-  // `coach` or the `admin` role — they are treated identically. There is no
-  // per-host coach assignment, because there is one coach.
-  //
-  // The former `data.coach_id` read clause was removed. It existed only to
-  // route hosts to different coaches, and it was host-writable, so a host
-  // could set it to an arbitrary user id and grant that stranger read access
-  // to their own record. Nothing grants access by a field the host controls.
-  //
-  // `coach_id` is retained on the schema for backwards compatibility with
-  // records already written. Nothing reads it. Candidate for removal.
-
   "name": "OnboardingProfile",
   "type": "object",
   "properties": {
@@ -24,20 +7,32 @@
       "description": "Current number of properties in the host's portfolio"
     },
     "target_market_city": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 120
     },
     "capital_available": {
       "type": "number",
+      "minimum": 0,
       "description": "Capital available in USD"
     },
     "hours_per_week": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0,
+      "description": "Hours committed per week; negative values are not valid"
     },
     "biggest_constraint": {
-      "type": "string"
+      "type": "string",
+      "enum": [
+        "Time",
+        "Capital",
+        "Market knowledge",
+        "Landlord access",
+        "Confidence"
+      ]
     },
     "goal_28_day": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 500
     },
     "start_date": {
       "type": "string",
@@ -45,6 +40,7 @@
     },
     "weekly_outreach_target": {
       "type": "number",
+      "minimum": 0,
       "default": 20
     },
     "coach_id": {
@@ -56,12 +52,14 @@
       "format": "date-time"
     },
     "terms_version": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 40
     },
     "acknowledgements_accepted": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 80
       }
     }
   },

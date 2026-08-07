@@ -1,21 +1,4 @@
 {
-  // SINGLE-COACH MODEL.
-  //
-  // read/update/delete : the host who owns the record, or staff.
-  // create             : the host only, with ownership pinned server-side.
-  //
-  // "Staff" is the one business owner, whose account may carry either the
-  // `coach` or the `admin` role — they are treated identically. There is no
-  // per-host coach assignment, because there is one coach.
-  //
-  // The former `data.coach_id` read clause was removed. It existed only to
-  // route hosts to different coaches, and it was host-writable, so a host
-  // could set it to an arbitrary user id and grant that stranger read access
-  // to their own record. Nothing grants access by a field the host controls.
-  //
-  // `coach_id` is retained on the schema for backwards compatibility with
-  // records already written. Nothing reads it. Candidate for removal.
-
   "name": "OutreachLog",
   "type": "object",
   "properties": {
@@ -23,7 +6,8 @@
       "type": "string"
     },
     "landlord_name": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 120
     },
     "channel": {
       "type": "string",
@@ -37,10 +21,12 @@
       ]
     },
     "template": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 200
     },
     "outcome": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 2000
     },
     "date": {
       "type": "string",
