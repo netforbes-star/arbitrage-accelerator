@@ -65,7 +65,7 @@ export default function LandlordCRM() {
 
   // Optimistically patch one landlord inside the paginated list cache.
   const patchLandlordInList = (id, patch) => {
-    queryClient.setQueryData({ queryKey: ["landlords", "list"] }, (old) => {
+    queryClient.setQueryData(["landlords", "list"], (old) => {
       if (!old) return old;
       return { ...old, pages: old.pages.map((page) => page.map((l) => (l.id === id ? { ...l, ...patch } : l))) };
     });
@@ -81,7 +81,7 @@ export default function LandlordCRM() {
   const addMutation = useMutation({
     mutationFn: (payload) => base44.entities.Landlord.create(payload),
     onSuccess: (newRecord) => {
-      queryClient.setQueryData({ queryKey: ["landlords", "list"] }, (old) => {
+      queryClient.setQueryData(["landlords", "list"], (old) => {
         if (!old) return old;
         const pages = [...old.pages];
         pages[0] = [newRecord, ...(pages[0] || [])];
@@ -95,12 +95,12 @@ export default function LandlordCRM() {
     mutationFn: ({ id, stage, date }) => base44.entities.Landlord.update(id, { stage, last_contact_date: date }),
     onMutate: async ({ id, stage, date }) => {
       await queryClient.cancelQueries({ queryKey: ["landlords", "list"] });
-      const prev = queryClient.getQueryData({ queryKey: ["landlords", "list"] });
+      const prev = queryClient.getQueryData(["landlords", "list"]);
       patchLandlordInList(id, { stage, last_contact_date: date });
       return { prev };
     },
     onError: (err, vars, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData({ queryKey: ["landlords", "list"] }, ctx.prev);
+      if (ctx?.prev) queryClient.setQueryData(["landlords", "list"], ctx.prev);
       setError("We couldn't update this landlord's stage. Please try again.");
     },
     onSuccess: () => refreshLight()
