@@ -81,8 +81,17 @@ for (const name of HOST_OWNED) {
 {
   const a = entity('AuditLog');
   chk(JSON.stringify(a.rls.read).includes('admin'), 'B AuditLog: readable by admin only');
-  const immutable = (v) => JSON.stringify(v).includes('__system_never__');
-  chk(immutable(a.rls.update) && immutable(a.rls.delete), 'B AuditLog: append-only, no role can edit history');
+  const sealed = (v) => JSON.stringify(v).includes('__system_never__');
+  chk(sealed(a.rls.update) && sealed(a.rls.delete), 'B AuditLog: append-only, no role can edit history');
+  chk(sealed(a.rls.create), 'B AuditLog: browser cannot forge an entry, service role only');
+  const auditLib = read(at('src/lib/audit.js'));
+  chk(!/entities\.AuditLog\.create/.test(auditLib), 'B AuditLog: client never writes the entity directly');
+  chk(/writeAudit/.test(auditLib), 'B AuditLog: client routes through the writeAudit backend function');
+  const wa = read(at('base44/functions/writeAudit/entry.ts'));
+  chk(/asServiceRole\.entities\.AuditLog\.create/.test(wa), 'B AuditLog: backend writes with service role');
+  chk(/actor_email:\s*user\.email/.test(wa) && /actor_role:\s*user\.role/.test(wa),
+    'B AuditLog: actor identity derived from the session, not the request body');
+  chk(!/body\.actor_email|body\.actor_role/.test(wa), 'B AuditLog: browser cannot override actor identity');
 }
 {
   const u = entity('User');
