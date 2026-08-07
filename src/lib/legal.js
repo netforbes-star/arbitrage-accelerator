@@ -11,7 +11,7 @@
 export const TERMS_VERSION = "1.0";
 export const TERMS_EFFECTIVE_DATE = "August 7, 2026";
 export const COMPANY = "Nurse Net AED";
-export const CONTACT_EMAIL = "netforbes@magaccommodations.net";
+export const CONTACT_EMAIL = "net4bes@nnaed.com";
 
 export const TERMS_SECTIONS = [
   {
