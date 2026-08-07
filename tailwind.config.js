@@ -13,7 +13,15 @@ module.exports = {
   			brand: {
   				DEFAULT: '#191983',
   				bright: '#1C1C94',
-  				gold: '#CDAA4C'
+  				gold: '#CDAA4C',
+  				/* Dark-theme surfaces, derived from the brand blue. */
+  				ink: '#09091F',
+  				surface: '#11122B',
+  				raised: '#191A3B',
+  				line: '#2A2B4F',
+  				text: '#F2F3FA',
+  				mutedtext: '#A9ACC9',
+  				golddim: '#8A7333'
   			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
