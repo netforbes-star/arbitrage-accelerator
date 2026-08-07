@@ -331,6 +331,54 @@ for (const name of HOST_OWNED) {
     'K CRM: no unbounded full-collection load');
 }
 
+/* ── L. SCHEMA HARDENING ─────────────────────────────────────────────── */
+{
+  const ALL = fs.readdirSync(at('base44/entities')).map((f) => f.replace('.jsonc', ''));
+
+  // Security blocks must survive every schema edit.
+  chk(JSON.stringify(entity('Deal').rls.update).includes('__system_never__'),
+    'L Deal.update still sealed after schema hardening');
+  const al = entity('AuditLog').rls;
+  chk(['create', 'update', 'delete'].every((o) => JSON.stringify(al[o]).includes('__system_never__')),
+    'L AuditLog still sealed after schema hardening');
+  for (const name of HOST_OWNED)
+    chk(JSON.stringify(entity(name).rls.read).includes('created_by_id'),
+      `L ${name} read rule survived schema hardening`);
+
+  // Values that are legitimately negative must not be floored at zero.
+  const CAN_BE_NEGATIVE = [['Deal', 'cash_profit'], ['Deal', 'true_profit'],
+    ['Deal', 'profit_margin_pct'], ['Market', 'arbitrage_spread']];
+  for (const [e, f] of CAN_BE_NEGATIVE) {
+    const p = entity(e).properties[f] || {};
+    chk(p.minimum === undefined || p.minimum < 0, `L ${e}.${f} not floored at zero`, JSON.stringify(p.minimum));
+  }
+
+  // Scores are constrained to the 1-10 system the app actually uses.
+  for (const f of ['location_score', 'size_score', 'condition_score']) {
+    const p = entity('Deal').properties[f] || {};
+    chk(p.maximum === 10, `L Deal.${f} capped at the 10-point scale`, `max=${p.maximum}`);
+  }
+
+  // Every status-like field is a closed enum.
+  for (const [e, f] of [['Deal', 'status'], ['Deal', 'verdict'], ['Deal', 'permission_type'],
+    ['Landlord', 'stage'], ['Landlord', 'type'], ['Market', 'regulation_status'],
+    ['Market', 'recommendation'], ['User', 'role']]) {
+    const p = entity(e).properties[f] || {};
+    chk(Array.isArray(p.enum) && p.enum.length > 0, `L ${e}.${f} is a closed enum`, (p.enum || []).join('|'));
+  }
+
+  // No free-text field left uncapped.
+  let uncapped = [];
+  for (const name of ALL) {
+    const props = entity(name).properties || {};
+    for (const [f, p] of Object.entries(props)) {
+      if (p.type !== 'string' || p.enum || p.format) continue;
+      if (p.maxLength === undefined) uncapped.push(`${name}.${f}`);
+    }
+  }
+  chk(uncapped.length === 0, 'L every free-text field has a length cap', uncapped.slice(0, 8).join(', '));
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
