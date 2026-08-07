@@ -215,8 +215,11 @@ for (const name of HOST_OWNED) {
   chk(stale === 0, 'I8 no stale contact address anywhere in source');
 
   const layout = read(at('src/components/Layout.jsx'));
-  chk(/to:\s*"\/export"[\s\S]{0,140}roles:\s*\[[^\]]*"host"/.test(layout), 'I9 Download link visible to hosts');
-  chk(!/to:\s*"\/export"[\s\S]{0,140}roles:\s*\[[^\]]*"coach"/.test(layout), 'I9 export not offered to coaches');
+  // Match only the single nav object for /export. A looser span leaks into the
+  // next nav entry and reports a false positive.
+  const exportNav = (layout.match(/\{[^{}]*"\/export"[^{}]*\}/) || [''])[0];
+  chk(exportNav.includes('"host"'), 'I9 Download link visible to hosts', exportNav.trim());
+  chk(!exportNav.includes('"coach"'), 'I9 export not offered to coaches');
   chk(read(at('src/App.jsx')).includes('path="/export"'), 'I9 /export route registered');
 }
 
