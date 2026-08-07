@@ -1,20 +1,18 @@
 {
-  // SINGLE-COACH MODEL.
+  // SINGLE-COACH MODEL + SERVER-ENFORCED WORKFLOW.
   //
-  // read/update/delete : the host who owns the record, or staff.
-  // create             : the host only, with ownership pinned server-side.
+  // read   : the host who owns the deal, or staff.
+  // create : the host only, ownership pinned server-side. The saveDeal backend
+  //          function creates through the *user-scoped* client precisely so
+  //          created_by_id lands on the real owner.
+  // update : NOBODY from the browser. Gated on a role that does not exist, so
+  //          every edit must go through the saveDeal backend function, which
+  //          updates via asServiceRole. This is what makes the status rules
+  //          unbypassable — without it a host could PATCH the entity directly
+  //          and set status to "lease signed" with no permission artifact.
+  // delete : the host who owns the deal, or staff.
   //
-  // "Staff" is the one business owner, whose account may carry either the
-  // `coach` or the `admin` role — they are treated identically. There is no
-  // per-host coach assignment, because there is one coach.
-  //
-  // The former `data.coach_id` read clause was removed. It existed only to
-  // route hosts to different coaches, and it was host-writable, so a host
-  // could set it to an arbitrary user id and grant that stranger read access
-  // to their own record. Nothing grants access by a field the host controls.
-  //
-  // `coach_id` is retained on the schema for backwards compatibility with
-  // records already written. Nothing reads it. Candidate for removal.
+  // `coach_id` is retained for backwards compatibility. Nothing reads it.
 
   "name": "Deal",
   "type": "object",
@@ -169,21 +167,9 @@
       "created_by_id": "{{user.id}}"
     },
     "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "coach"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "__system_never__"
+      }
     },
     "delete": {
       "$or": [
