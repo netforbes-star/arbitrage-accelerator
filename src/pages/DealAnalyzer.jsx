@@ -88,8 +88,7 @@ export default function DealAnalyzer() {
       months_to_recoup: calc.months_to_recoup,
       recommended_strategy: calc.recommended_strategy,
       verdict: calc.verdict,
-      fail_fix: calc.fail_fix,
-      coach_id: coachId
+      fail_fix: calc.fail_fix
     };
     try {
       if (editingId) await base44.entities.Deal.update(editingId, payload);

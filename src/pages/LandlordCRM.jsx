@@ -37,7 +37,7 @@ export default function LandlordCRM() {
 
   const addLandlord = async () => {
     if (!form.name) return;
-    await base44.entities.Landlord.create({ ...form, coach_id: coachId });
+    await base44.entities.Landlord.create({ ...form });
     setForm({ name: "", company: "", type: "private", stage: "not contacted", email: "", phone: "", notes: "", next_action_date: "" });
     setShowAdd(false);
     load();
@@ -52,7 +52,7 @@ export default function LandlordCRM() {
     const ll = landlords.find((l) => l.id === logFor);
     await base44.entities.OutreachLog.create({
       landlord_id: logFor, landlord_name: ll?.name || "", channel: log.channel, template: log.template, outcome: log.outcome,
-      date: new Date().toISOString().slice(0, 10), coach_id: coachId
+      date: new Date().toISOString().slice(0, 10)
     });
     if (ll && ll.stage === "not contacted") await base44.entities.Landlord.update(logFor, { stage: "contacted", last_contact_date: new Date().toISOString().slice(0, 10) });
     setLogFor(null);

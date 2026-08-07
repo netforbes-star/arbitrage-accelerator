@@ -27,7 +27,7 @@ export default function BuyBoxSection({ coachId }) {
 
   const save = async () => {
     setSaving(true);
-    const payload = { ...form, bedrooms: Number(form.bedrooms) || 2, bathrooms: Number(form.bathrooms) || 1, max_monthly_rent: Number(form.max_monthly_rent) || 0, max_drive_time_minutes: Number(form.max_drive_time_minutes) || 0, coach_id: coachId };
+    const payload = { ...form, bedrooms: Number(form.bedrooms) || 2, bathrooms: Number(form.bathrooms) || 1, max_monthly_rent: Number(form.max_monthly_rent) || 0, max_drive_time_minutes: Number(form.max_drive_time_minutes) || 0 };
     if (box) await base44.entities.BuyBox.update(box.id, payload);
     else { const created = await base44.entities.BuyBox.create(payload); setBox(created); }
     setSaving(false);

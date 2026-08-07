@@ -60,8 +60,7 @@ export default function Program() {
       });
     } else {
       await base44.entities.UserTaskProgress.create({
-        day, task_index: taskIndex, coach_id: coachId,
-        status: nowComplete ? "complete" : "pending",
+        day, task_index: taskIndex,        status: nowComplete ? "complete" : "pending",
         completed_date: nowComplete ? new Date().toISOString().slice(0, 10) : null
       });
     }
@@ -72,7 +71,7 @@ export default function Program() {
     if (!skipFor) return;
     const { day, taskIndex } = skipFor;
     const existing = progMap[`${day}-${taskIndex}`];
-    const payload = { status: "skipped", skipped_reason: skipReason || "Skipped", coach_id: coachId };
+    const payload = { status: "skipped", skipped_reason: skipReason || "Skipped" };
     if (existing) await base44.entities.UserTaskProgress.update(existing.id, payload);
     else await base44.entities.UserTaskProgress.create({ day, task_index: taskIndex, ...payload });
     setSkipFor(null); setSkipReason("");

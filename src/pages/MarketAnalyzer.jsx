@@ -68,8 +68,7 @@ export default function MarketAnalyzer() {
       comp_revenue_low: Number(form.comp_revenue_low) || 0, comp_revenue_median: Number(form.comp_revenue_median) || 0,
       comp_revenue_high: Number(form.comp_revenue_high) || 0, average_market_rent: Number(form.average_market_rent) || 0,
       arbitrage_spread: calc.arbitrage_spread, spread_ratio: calc.spread_ratio, composite_score: calc.composite_score,
-      recommendation: calc.recommendation, stale_data_flag: calc.stale_data_flag, thin_market_flag: calc.thin_market_flag,
-      coach_id: coachId
+      recommendation: calc.recommendation, stale_data_flag: calc.stale_data_flag, thin_market_flag: calc.thin_market_flag
     });
     setForm({ ...EMPTY });
     load();

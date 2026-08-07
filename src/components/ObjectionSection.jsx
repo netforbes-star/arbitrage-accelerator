@@ -34,7 +34,7 @@ export default function ObjectionSection({ coachId }) {
   const saveAll = async () => {
     setSaving(true);
     await Promise.all(OBJECTIONS.map((o) => {
-      const payload = { objection_key: o.key, objection_text: o.text, annette_answer: o.answer, host_response: responses[o.key] || "", coach_id: coachId };
+      const payload = { objection_key: o.key, objection_text: o.text, annette_answer: o.answer, host_response: responses[o.key] || "" };
       const rec = existing[o.key];
       if (rec) return base44.entities.ObjectionResponse.update(rec.id, payload);
       return base44.entities.ObjectionResponse.create(payload);
