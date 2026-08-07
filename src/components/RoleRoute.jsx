@@ -17,7 +17,7 @@ export default function RoleRoute({ allow = [] }) {
   if (isLoadingAuth || !authChecked) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-brand rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" />
       </div>
     );
   }
@@ -27,11 +27,11 @@ export default function RoleRoute({ allow = [] }) {
   if (!allow.includes(role)) {
     return (
       <div className="max-w-md mx-auto text-center py-20 px-4">
-        <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-          <ShieldAlert className="w-7 h-7 text-slate-400" />
+        <div className="w-14 h-14 rounded-full bg-brand-raised flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert className="w-7 h-7 text-brand-mutedtext" />
         </div>
-        <h1 className="text-xl font-semibold text-brand mb-2">This area isn't yours</h1>
-        <p className="text-slate-500 text-sm">
+        <h1 className="text-xl font-semibold text-brand-text mb-2">This area isn't yours</h1>
+        <p className="text-brand-mutedtext text-sm">
           You're signed in as a {role}. This screen is for {allow.join(" and ")} accounts only.
           If you think that's wrong, reach out to your coach.
         </p>
