@@ -273,6 +273,37 @@ for (const name of HOST_OWNED) {
   chk(read(at('src/App.jsx')).includes('path="/export"'), 'I9 /export route registered');
 }
 
+/* ── J. FAILURE HANDLING ─────────────────────────────────────────────── */
+{
+  const WORKFLOWS = ['DealAnalyzer', 'MarketAnalyzer', 'LandlordCRM', 'Onboarding', 'AdminPanel', 'CoachConsole'];
+  for (const w of WORKFLOWS) {
+    const c = read(at(`src/pages/${w}.jsx`));
+    chk(/try\s*\{/.test(c) && /catch/.test(c), `J ${w}: guarded with try/catch`);
+    chk(/finally/.test(c), `J ${w}: releases busy state in a finally block`);
+    chk(/please try again/i.test(c), `J ${w}: shows a friendly retry message`);
+    chk(!/\{\s*(e|err|error)\.message\s*\}/.test(c), `J ${w}: never renders a raw error message`);
+    chk(!/\{\s*(e|err|error)\.stack\s*\}/.test(c), `J ${w}: never renders a stack trace`);
+  }
+  for (const w of WORKFLOWS) {
+    const c = read(at(`src/pages/${w}.jsx`));
+    for (const flag of ['setSaving', 'setBusy', 'setDeleting']) {
+      const on = (c.match(new RegExp(`${flag}\\(true\\)`, 'g')) || []).length;
+      const off = (c.match(new RegExp(`${flag}\\(false\\)`, 'g')) || []).length;
+      if (on) chk(off >= on, `J ${w}: ${flag} always cleared`, `${on} on / ${off} off`);
+    }
+  }
+  {
+    const m = read(at('src/pages/MarketAnalyzer.jsx'));
+    const save = m.slice(m.indexOf('const save ='), m.indexOf('const remove ='));
+    const on = (save.match(/setSaving\(true\)/g) || []).length;
+    const off = (save.match(/setSaving\(false\)/g) || []).length;
+    chk(on >= 1 && off >= on, 'J MarketAnalyzer: every save path clears the saving state', `${on} on / ${off} off`);
+    chk(/finally\s*\{[\s\S]{0,80}setSaving\(false\)/.test(save), 'J MarketAnalyzer: saving cleared in finally');
+    chk(save.indexOf('setForm({ ...EMPTY })') > save.indexOf('Market.create'),
+      'J MarketAnalyzer: form only cleared after a successful save');
+  }
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
