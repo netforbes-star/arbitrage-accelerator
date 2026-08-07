@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useHostProfile } from "@/lib/useHostProfile";
 import { analyzeMarket, REGULATION_STATUSES } from "@/lib/marketMath";
+import { computeMarket } from "@/functions/computeMarket";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,14 +44,31 @@ export default function MarketAnalyzer() {
 
   const save = async () => {
     setSaving(true);
+    let calc;
+    try {
+      const res = await computeMarket({
+        comp_revenue_median: Number(form.comp_revenue_median) || 0,
+        average_market_rent: Number(form.average_market_rent) || 0,
+        adr: Number(form.adr) || 0,
+        occupancy_rate: Number(form.occupancy_rate) || 0,
+        active_listings: Number(form.active_listings) || 0,
+        comp_count: Number(form.comp_count) || 0,
+        regulation_status: form.regulation_status,
+        data_pulled_date: form.data_pulled_date
+      });
+      calc = res.data;
+    } catch (e) {
+      setSaving(false);
+      return;
+    }
     await base44.entities.Market.create({
       ...form,
       adr: Number(form.adr) || 0, occupancy_rate: Number(form.occupancy_rate) || 0, revpar: Number(form.revpar) || 0,
       active_listings: Number(form.active_listings) || 0, comp_count: Number(form.comp_count) || 0,
       comp_revenue_low: Number(form.comp_revenue_low) || 0, comp_revenue_median: Number(form.comp_revenue_median) || 0,
       comp_revenue_high: Number(form.comp_revenue_high) || 0, average_market_rent: Number(form.average_market_rent) || 0,
-      arbitrage_spread: result.arbitrage_spread, spread_ratio: result.spread_ratio, composite_score: result.composite_score,
-      recommendation: result.recommendation, stale_data_flag: result.stale_data_flag, thin_market_flag: result.thin_market_flag,
+      arbitrage_spread: calc.arbitrage_spread, spread_ratio: calc.spread_ratio, composite_score: calc.composite_score,
+      recommendation: calc.recommendation, stale_data_flag: calc.stale_data_flag, thin_market_flag: calc.thin_market_flag,
       coach_id: coachId
     });
     setForm({ ...EMPTY });

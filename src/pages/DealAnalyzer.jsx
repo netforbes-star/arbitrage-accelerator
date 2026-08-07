@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useHostProfile } from "@/lib/useHostProfile";
 import { analyzeDeal, DEAL_STATUSES } from "@/lib/dealMath";
+import { computeDeal } from "@/functions/computeDeal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,25 @@ export default function DealAnalyzer() {
       return;
     }
     setSaving(true);
+    let calc;
+    try {
+      const res = await computeDeal({
+        revenue_mode: form.revenue_mode,
+        nightly_adr: Number(form.nightly_adr) || 0,
+        monthly_str_revenue: Number(form.monthly_str_revenue) || 0,
+        occupancy: Number(form.occupancy) || 0.6,
+        conservatism_haircut: Number(form.conservatism_haircut) || 0.15,
+        monthly_rent: Number(form.monthly_rent) || 0,
+        utilities: Number(form.utilities) || 0,
+        furnishing_cost: Number(form.furnishing_cost) || 0,
+        mtr_revenue_estimate: Number(form.mtr_revenue_estimate) || 0
+      });
+      calc = res.data;
+    } catch (e) {
+      setError(e.response?.data?.error || "Could not validate this deal. Please try again.");
+      setSaving(false);
+      return;
+    }
     const payload = {
       ...form,
       beds: Number(form.beds) || 0, baths: Number(form.baths) || 0,
@@ -59,16 +79,16 @@ export default function DealAnalyzer() {
       nightly_adr: Number(form.nightly_adr) || 0, monthly_str_revenue: Number(form.monthly_str_revenue) || 0,
       occupancy: Number(form.occupancy) || 0.6, conservatism_haircut: Number(form.conservatism_haircut) || 0.15,
       mtr_revenue_estimate: Number(form.mtr_revenue_estimate) || 0,
-      gross_revenue: Math.round(result.grossRevenue),
-      variable_costs: Math.round(result.variableCosts),
-      furniture_reserve: Math.round(result.furnitureReserve),
-      cash_profit: Math.round(result.cashProfit),
-      true_profit: Math.round(result.trueProfit),
-      profit_margin_pct: Math.round(result.margin),
-      months_to_recoup: result.monthsToRecoup ? Math.round(result.monthsToRecoup * 10) / 10 : null,
-      recommended_strategy: result.recommended,
-      verdict: result.verdict,
-      fail_fix: result.failFix,
+      gross_revenue: calc.gross_revenue,
+      variable_costs: calc.variable_costs,
+      furniture_reserve: calc.furniture_reserve,
+      cash_profit: calc.cash_profit,
+      true_profit: calc.true_profit,
+      profit_margin_pct: calc.profit_margin_pct,
+      months_to_recoup: calc.months_to_recoup,
+      recommended_strategy: calc.recommended_strategy,
+      verdict: calc.verdict,
+      fail_fix: calc.fail_fix,
       coach_id: coachId
     };
     try {
