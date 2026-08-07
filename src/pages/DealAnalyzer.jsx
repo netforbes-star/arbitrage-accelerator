@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { analyzeDeal, DEAL_STATUSES } from "@/lib/dealMath";
 import { computeDeal } from "@/functions/computeDeal";
 import { saveDeal } from "@/functions/saveDeal";
@@ -21,34 +22,39 @@ const EMPTY = {
 
 export default function DealAnalyzer() {
 
-  const [deals, setDeals] = useState([]);
+  const queryClient = useQueryClient();
+  const dealsQuery = useQuery({ queryKey: ["deals"], queryFn: () => base44.entities.Deal.list("-created_date", 100) });
+  const deals = dealsQuery.data || [];
+
   const [form, setForm] = useState({ ...EMPTY });
   const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [loadError, setLoadError] = useState(false);
-
-  const load = async () => {
-    setLoading(true);
-    setLoadError(false);
-    try {
-      const d = await base44.entities.Deal.list("-created_date", 100);
-      setDeals(d);
-    } catch (e) {
-      console.error("Deal load failed", e);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => { load(); }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const result = useMemo(() => analyzeDeal(form), [form]);
   const monthly = form.revenue_mode === "monthly";
 
   const reset = () => { setForm({ ...EMPTY }); setEditingId(null); setError(""); };
+
+  const saveMutation = useMutation({
+    mutationFn: ({ deal_id, fields }) => saveDeal({ deal_id, fields }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["deals"] })
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Deal.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["deals"] });
+      const prev = queryClient.getQueryData(["deals"]);
+      queryClient.setQueryData(["deals"], (old) => (old || []).filter((d) => d.id !== id));
+      return { prev };
+    },
+    onError: (err, id, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["deals"], ctx.prev);
+      setError("We couldn't remove this record. Nothing was changed — please try again.");
+    }
+  });
 
   const save = async () => {
     setError("");
@@ -96,9 +102,8 @@ export default function DealAnalyzer() {
       fail_fix: calc.fail_fix
     };
     try {
-      await saveDeal({ deal_id: editingId, fields: payload });
+      await saveMutation.mutateAsync({ deal_id: editingId, fields: payload });
       reset();
-      load();
     } catch (e) {
       setError(e.response?.data?.error || "Something went wrong saving this deal. Please try again.");
     } finally {
@@ -111,22 +116,13 @@ export default function DealAnalyzer() {
     setForm({ ...EMPTY, ...d, occupancy: d.occupancy ?? "0.6", conservatism_haircut: d.conservatism_haircut ?? "0.15" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  const remove = async (id) => {
-    setError("");
-    try {
-      await base44.entities.Deal.delete(id);
-      load();
-    } catch (e) {
-      console.error("Deal delete failed", e);
-      setError("We couldn't remove this record. Nothing was changed — please try again.");
-    }
-  };
+  const remove = (id) => deleteMutation.mutate(id);
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
-  if (loadError) return (
+  if (dealsQuery.isLoading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (dealsQuery.isError) return (
     <div className="space-y-4 py-10 text-center">
       <p className="text-brand-mutedtext">We couldn't load your deals right now.</p>
-      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={() => dealsQuery.refetch()}>Try again</Button>
     </div>
   );
   const pass = result.verdict === "PASS";

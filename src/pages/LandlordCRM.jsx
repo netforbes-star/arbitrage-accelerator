@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,43 +16,65 @@ const CHANNELS = ["email", "phone", "text", "in-person", "direct mail", "social"
 
 export default function LandlordCRM() {
 
-  const [landlords, setLandlords] = useState([]);
+  const queryClient = useQueryClient();
+  const landlordsQuery = useQuery({ queryKey: ["landlords"], queryFn: () => base44.entities.Landlord.list("-created_date", 300) });
+  const landlords = landlordsQuery.data || [];
+
   const [view, setView] = useState("list");
-  const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [logFor, setLogFor] = useState(null);
   const [form, setForm] = useState({ name: "", company: "", type: "private", stage: "not contacted", email: "", phone: "", notes: "", next_action_date: "" });
   const [log, setLog] = useState({ channel: "email", template: "", outcome: "" });
   const [error, setError] = useState("");
-  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
-    setLoadError(false);
-    try {
-      const ll = await base44.entities.Landlord.list("-created_date", 300);
-      setLandlords(ll);
-    } catch (e) {
-      console.error("Landlord load failed", e);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => { load(); }, []);
-
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const addMutation = useMutation({
+    mutationFn: (payload) => base44.entities.Landlord.create(payload),
+    onSuccess: (newRecord) => queryClient.setQueryData(["landlords"], (old) => [newRecord, ...(old || [])])
+  });
+
+  const moveStageMutation = useMutation({
+    mutationFn: ({ id, stage, date }) => base44.entities.Landlord.update(id, { stage, last_contact_date: date }),
+    onMutate: async ({ id, stage, date }) => {
+      await queryClient.cancelQueries({ queryKey: ["landlords"] });
+      const prev = queryClient.getQueryData(["landlords"]);
+      queryClient.setQueryData(["landlords"], (old) => (old || []).map((l) => (l.id === id ? { ...l, stage, last_contact_date: date } : l)));
+      return { prev };
+    },
+    onError: (err, vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["landlords"], ctx.prev);
+      setError("We couldn't update this landlord's stage. Please try again.");
+    }
+  });
+
+  const logMutation = useMutation({
+    mutationFn: async ({ logFor, log, ll }) => {
+      await base44.entities.OutreachLog.create({
+        landlord_id: logFor, landlord_name: ll?.name || "", channel: log.channel, template: log.template, outcome: log.outcome,
+        date: new Date().toISOString().slice(0, 10)
+      });
+      const bumped = !!(ll && ll.stage === "not contacted");
+      if (bumped) await base44.entities.Landlord.update(logFor, { stage: "contacted", last_contact_date: new Date().toISOString().slice(0, 10) });
+      return { bumped };
+    },
+    onSuccess: (res, vars) => {
+      if (res.bumped) {
+        const date = new Date().toISOString().slice(0, 10);
+        queryClient.setQueryData(["landlords"], (old) => (old || []).map((l) => (l.id === vars.logFor ? { ...l, stage: "contacted", last_contact_date: date } : l)));
+      }
+    }
+  });
 
   const addLandlord = async () => {
     if (!form.name) return;
     setError("");
     setSaving(true);
     try {
-      await base44.entities.Landlord.create({ ...form });
+      await addMutation.mutateAsync({ ...form });
       setForm({ name: "", company: "", type: "private", stage: "not contacted", email: "", phone: "", notes: "", next_action_date: "" });
       setShowAdd(false);
-      load();
     } catch (e) {
       console.error("Landlord create failed", e);
       setError("We couldn't save this yet. Your information is still on this screen — please try again.");
@@ -60,16 +83,9 @@ export default function LandlordCRM() {
     }
   };
 
-  const moveStage = async (id, stage) => {
+  const moveStage = (id, stage) => {
     setError("");
-    try {
-      await base44.entities.Landlord.update(id, { stage, last_contact_date: new Date().toISOString().slice(0, 10) });
-      load();
-    } catch (e) {
-      console.error("Landlord stage update failed", e);
-      setError("We couldn't update this landlord's stage. Please try again.");
-      load();
-    }
+    moveStageMutation.mutate({ id, stage, date: new Date().toISOString().slice(0, 10) });
   };
 
   const saveLog = async () => {
@@ -77,14 +93,9 @@ export default function LandlordCRM() {
     setError("");
     setSaving(true);
     try {
-      await base44.entities.OutreachLog.create({
-        landlord_id: logFor, landlord_name: ll?.name || "", channel: log.channel, template: log.template, outcome: log.outcome,
-        date: new Date().toISOString().slice(0, 10)
-      });
-      if (ll && ll.stage === "not contacted") await base44.entities.Landlord.update(logFor, { stage: "contacted", last_contact_date: new Date().toISOString().slice(0, 10) });
+      await logMutation.mutateAsync({ logFor, log, ll });
       setLogFor(null);
       setLog({ channel: "email", template: "", outcome: "" });
-      load();
     } catch (e) {
       console.error("Outreach log failed", e);
       setError("We couldn't save this yet. Your information is still on this screen — please try again.");
@@ -93,18 +104,20 @@ export default function LandlordCRM() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
-  if (loadError) return (
+  const today = new Date().toISOString().slice(0, 10);
+  const { sendQueue, contacted, conversations } = useMemo(() => ({
+    sendQueue: landlords.filter((l) => l.stage !== "won" && l.stage !== "lost" && (!l.next_action_date || l.next_action_date <= today)),
+    contacted: landlords.filter((l) => l.stage !== "not contacted").length,
+    conversations: landlords.filter((l) => ["conversation held", "property viewed", "negotiating", "won"].includes(l.stage)).length
+  }), [landlords, today]);
+
+  if (landlordsQuery.isLoading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (landlordsQuery.isError) return (
     <div className="space-y-4 py-10 text-center">
       <p className="text-brand-mutedtext">We couldn't load your landlords right now.</p>
-      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={() => landlordsQuery.refetch()}>Try again</Button>
     </div>
   );
-
-  const today = new Date().toISOString().slice(0, 10);
-  const sendQueue = landlords.filter((l) => l.stage !== "won" && l.stage !== "lost" && (!l.next_action_date || l.next_action_date <= today));
-  const contacted = landlords.filter((l) => l.stage !== "not contacted").length;
-  const conversations = landlords.filter((l) => ["conversation held", "property viewed", "negotiating", "won"].includes(l.stage)).length;
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { analyzeMarket, REGULATION_STATUSES } from "@/lib/marketMath";
 import { computeMarket } from "@/functions/computeMarket";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,30 +27,35 @@ const REC_BADGE = { go: "bg-green-500/15 text-green-400", hold: "bg-amber-500/15
 
 export default function MarketAnalyzer() {
 
-  const [markets, setMarkets] = useState([]);
+  const queryClient = useQueryClient();
+  const marketsQuery = useQuery({ queryKey: ["markets"], queryFn: () => base44.entities.Market.list("-created_date", 100) });
+  const markets = marketsQuery.data || [];
+
   const [form, setForm] = useState({ ...EMPTY });
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [loadError, setLoadError] = useState(false);
-
-  const load = async () => {
-    setLoading(true);
-    setLoadError(false);
-    try {
-      const m = await base44.entities.Market.list("-created_date", 100);
-      setMarkets(m);
-    } catch (e) {
-      console.error("Market load failed", e);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => { load(); }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const result = useMemo(() => analyzeMarket(form), [form]);
+
+  const createMutation = useMutation({
+    mutationFn: (payload) => base44.entities.Market.create(payload),
+    onSuccess: (newRecord) => queryClient.setQueryData(["markets"], (old) => [newRecord, ...(old || [])])
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Market.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["markets"] });
+      const prev = queryClient.getQueryData(["markets"]);
+      queryClient.setQueryData(["markets"], (old) => (old || []).filter((m) => m.id !== id));
+      return { prev };
+    },
+    onError: (err, id, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["markets"], ctx.prev);
+      setError("We couldn't remove this record. Nothing was changed — please try again.");
+    }
+  });
 
   const save = async () => {
     setError("");
@@ -74,7 +80,7 @@ export default function MarketAnalyzer() {
       return;
     }
     try {
-      await base44.entities.Market.create({
+      await createMutation.mutateAsync({
         ...form,
         adr: Number(form.adr) || 0, occupancy_rate: Number(form.occupancy_rate) || 0, revpar: Number(form.revpar) || 0,
         active_listings: Number(form.active_listings) || 0, comp_count: Number(form.comp_count) || 0,
@@ -84,7 +90,6 @@ export default function MarketAnalyzer() {
         recommendation: calc.recommendation, stale_data_flag: calc.stale_data_flag, thin_market_flag: calc.thin_market_flag
       });
       setForm({ ...EMPTY });
-      load();
     } catch (e) {
       console.error("Market save failed", e);
       setError("We couldn't save this yet. Your information is still on this screen — please try again.");
@@ -93,22 +98,13 @@ export default function MarketAnalyzer() {
     }
   };
 
-  const remove = async (id) => {
-    setError("");
-    try {
-      await base44.entities.Market.delete(id);
-      load();
-    } catch (e) {
-      console.error("Market delete failed", e);
-      setError("We couldn't remove this record. Nothing was changed — please try again.");
-    }
-  };
+  const remove = (id) => deleteMutation.mutate(id);
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
-  if (loadError) return (
+  if (marketsQuery.isLoading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (marketsQuery.isError) return (
     <div className="space-y-4 py-10 text-center">
       <p className="text-brand-mutedtext">We couldn't load your markets right now.</p>
-      <Button variant="outline" className="border-brand-line text-brand-text" onClick={load}>Try again</Button>
+      <Button variant="outline" className="border-brand-line text-brand-text" onClick={() => marketsQuery.refetch()}>Try again</Button>
     </div>
   );
 
