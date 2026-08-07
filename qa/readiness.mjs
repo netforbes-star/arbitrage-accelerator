@@ -75,8 +75,14 @@ for (const name of HOST_OWNED) {
   chk(JSON.stringify(rls?.read || {}).includes('created_by_id'), `B ${name}: read scoped to owner`);
   chk(JSON.stringify(rls?.read) !== '{}', `B ${name}: read is NOT world-readable`);
   chk(JSON.stringify(rls?.create || {}).includes('created_by_id'), `B ${name}: create pins ownership server-side`);
-  for (const op of ['update', 'delete'])
-    chk(JSON.stringify(rls?.[op] || {}).includes('created_by_id'), `B ${name}: ${op} scoped to owner`);
+  for (const op of ['update', 'delete']) {
+    const r = JSON.stringify(rls?.[op] || {});
+    // Deal.update is deliberately sealed to the browser so the status rules in
+    // the saveDeal function cannot be bypassed by a direct entity write.
+    const sealedByDesign = name === 'Deal' && op === 'update';
+    chk(sealedByDesign ? r.includes('__system_never__') : r.includes('created_by_id'),
+      `B ${name}: ${op} ${sealedByDesign ? 'sealed, backend-only' : 'scoped to owner'}`);
+  }
   // Single-coach model: access is never granted by a field the host controls.
   for (const op of ['read', 'update', 'delete'])
     chk(!JSON.stringify(rls?.[op] || {}).includes('data.coach_id'),
@@ -114,6 +120,24 @@ for (const name of HOST_OWNED) {
   chk(!/coachId/.test(srcAll), 'B no per-host coach routing left in the client');
   for (const e of ['Deal', 'Landlord', 'OnboardingProfile'])
     chk(!!entity(e).properties.coach_id, `B ${e}.coach_id retained for backwards compatibility`);
+}
+
+/* ── B2. DEAL WORKFLOW ENFORCEMENT ────────────────────────────────────── */
+{
+  const fn = read(at('base44/functions/saveDeal/entry.ts'));
+  chk(/auth\.me\(\)/.test(fn), 'B2 saveDeal authenticates the caller');
+  chk(/isStaff|STAFF_ROLES/.test(fn), 'B2 saveDeal checks ownership or staff');
+  chk(/lease signed[\s\S]{0,400}permission_artifact_url/.test(fn) ||
+      /permission_artifact_url[\s\S]{0,400}lease signed/.test(fn),
+    'B2 lease-signed requires a permission artifact');
+  chk(/We can't mark this deal as lease signed yet/.test(fn), 'B2 rejection message is user-friendly');
+  chk(!/stack|errno|ECONN|SQL/.test(fn.split('return reject')[1] || ''), 'B2 no technical codes leak to the user');
+  chk(/asServiceRole\.entities\.Deal\.update/.test(fn), 'B2 updates run with service role, past the sealed RLS');
+  chk(/entities\.Deal\.create/.test(fn) && !/asServiceRole\.entities\.Deal\.create/.test(fn),
+    'B2 creates run user-scoped so ownership lands on the real host');
+  const page = read(at('src/pages/DealAnalyzer.jsx'));
+  chk(/saveDeal\(/.test(page), 'B2 client saves through the backend function');
+  chk(!/entities\.Deal\.(create|update)/.test(page), 'B2 client never writes the Deal entity directly');
 }
 
 /* ── C. ROUTE + ROLE GUARDS ───────────────────────────────────────────── */
