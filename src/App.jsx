@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import RoleRoute from '@/components/RoleRoute';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -56,8 +57,12 @@ const AuthenticatedApp = () => {
           <Route path="/landlords" element={<LandlordCRM />} />
           <Route path="/templates" element={<TemplateVault />} />
           <Route path="/graduation" element={<Graduation />} />
-          <Route path="/coach" element={<CoachConsole />} />
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route element={<RoleRoute allow={['coach', 'admin']} />}>
+            <Route path="/coach" element={<CoachConsole />} />
+          </Route>
+          <Route element={<RoleRoute allow={['admin']} />}>
+            <Route path="/admin" element={<AdminPanel />} />
+          </Route>
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />
