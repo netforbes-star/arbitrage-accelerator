@@ -14,6 +14,12 @@
     "target_user_email": {
       "type": "string"
     },
+    "target_type": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
     "details": {
       "type": "string"
     }
@@ -27,7 +33,11 @@
         "role": "admin"
       }
     },
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "__system_never__"
+      }
+    },
     "update": {
       "user_condition": {
         "role": "__system_never__"
