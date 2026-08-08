@@ -1,5 +1,5 @@
 {
-  "name": "Untitled",
+  "name": "Arbitrage Accelerator",
   "site": {
     "installCommand": "npm install",
     "buildCommand": "npm run build",
