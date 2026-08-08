@@ -388,6 +388,42 @@ for (const name of HOST_OWNED) {
   chk(uncapped.length === 0, 'L every free-text field has a length cap', uncapped.slice(0, 8).join(', '));
 }
 
+/* ── M. RESOURCES & EXTERNAL LINKS ───────────────────────────────────── */
+{
+  const page = read(at('src/pages/Resources.jsx'));
+  const list = read(at('src/components/resources/ResourceList.jsx'));
+  const mgr  = read(at('src/components/resources/ResourceManager.jsx'));
+  const both = page + list + mgr;
+
+  chk(/target="_blank"/.test(list), 'M external links open in a new tab');
+  chk(/rel="noopener noreferrer"/.test(list), 'M external links carry noopener noreferrer');
+  chk(/ExternalLink|external/i.test(list), 'M external links are visually marked as leaving the app');
+  chk(/hostname|new URL|domain/i.test(list), 'M destination domain shown so nobody clicks blind');
+  chk(/third-party|do not control|does not control/i.test(both), 'M third-party disclaimer present');
+
+  // Resource management is staff-only in the UI as well as the data layer.
+  chk(/STAFF_ROLES|isStaff/.test(page), 'M resource management gated to staff in the UI');
+  const r = entity('Resource');
+  chk(JSON.stringify(r.rls.read) === '{}', 'M resources readable by every signed-in host');
+  for (const op of ['create', 'update', 'delete'])
+    chk(/admin/.test(JSON.stringify(r.rls[op])) && /coach/.test(JSON.stringify(r.rls[op])),
+      `M Resource.${op} restricted to staff`);
+  chk(r.properties.url.format === 'uri', 'M resource url validated as a URI');
+
+  // The Resources page is a curated link list — it must not become a place
+  // curriculum or template content leaks out of.
+  const ex = read(at('src/lib/exportData.js'));
+  chk(!/entity:\s*"Resource"/.test(ex), 'M Resource not added to the data export');
+
+  // Shell branding — this is what a host sees in the browser tab.
+  const html = read(at('index.html'));
+  chk(!/Base44 APP/.test(html), 'M page title is not the platform default');
+  chk(/<title>Arbitrage Accelerator/.test(html), 'M page title is branded');
+  chk(!/base44\.com\/logo/.test(html), 'M favicon is not the platform logo');
+  chk(/theme-color"\s+content="#09091F"/.test(html), 'M browser chrome matches the dark theme');
+  chk(/name="description"/.test(html), 'M meta description present for sharing');
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
