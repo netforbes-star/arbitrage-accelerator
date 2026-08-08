@@ -64,7 +64,9 @@ function SeedButton() {
       const res = await seedContent({});
       setResult(res.data || res);
     } catch (e) {
-      setErr(e.message || "Failed to seed");
+      // Never surface the raw error text to the user.
+      console.error("Content seed failed", e);
+      setErr("We couldn't re-seed the content right now. Nothing was changed — please try again.");
     } finally {
       setBusy(false);
     }
