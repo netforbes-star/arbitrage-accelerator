@@ -1,0 +1,98 @@
+{
+  "name": "Resource",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2000
+    },
+    "source": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Publisher or site name, shown so hosts know where they are going"
+    },
+    "author": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 600
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Getting Started",
+        "Market Research",
+        "Landlord Outreach",
+        "Underwriting & Pricing",
+        "Operations",
+        "Legal & Compliance",
+        "Finance & Tax"
+      ],
+      "default": "Getting Started"
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 100
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "title",
+    "url"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coach"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coach"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "coach"
+          }
+        }
+      ]
+    }
+  }
+}

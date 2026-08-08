@@ -28,8 +28,8 @@ const DealAnalyzer = lazy(() => import('@/pages/DealAnalyzer'));
 const MarketAnalyzer = lazy(() => import('@/pages/MarketAnalyzer'));
 const LandlordCRM = lazy(() => import('@/pages/LandlordCRM'));
 const TemplateVault = lazy(() => import('@/pages/TemplateVault'));
-const CoachConsole = lazy(() => import('@/pages/CoachConsole'));
-const AdminPanel = lazy(() => import('@/pages/AdminPanel'));
+const Resources = lazy(() => import('@/pages/Resources'));
+const CoachWorkspace = lazy(() => import('@/pages/CoachWorkspace'));
 const Graduation = lazy(() => import('@/pages/Graduation'));
 const ExportData = lazy(() => import('@/pages/ExportData'));
 
@@ -70,14 +70,15 @@ const AuthenticatedApp = () => {
           <Route path="/deals" element={<Suspense fallback={<RouteFallback />}><DealAnalyzer /></Suspense>} />
           <Route path="/markets" element={<Suspense fallback={<RouteFallback />}><MarketAnalyzer /></Suspense>} />
           <Route path="/landlords" element={<Suspense fallback={<RouteFallback />}><LandlordCRM /></Suspense>} />
+          <Route path="/resources" element={<Suspense fallback={<RouteFallback />}><Resources /></Suspense>} />
           <Route path="/templates" element={<Suspense fallback={<RouteFallback />}><TemplateVault /></Suspense>} />
           <Route path="/export" element={<Suspense fallback={<RouteFallback />}><ExportData /></Suspense>} />
           <Route path="/graduation" element={<Suspense fallback={<RouteFallback />}><Graduation /></Suspense>} />
+          {/* Legacy staff routes redirect to the merged workspace so old links and bookmarks keep working. */}
+          <Route path="/coach" element={<Navigate to="/workspace" replace />} />
+          <Route path="/admin" element={<Navigate to="/workspace" replace />} />
           <Route element={<RoleRoute allow={STAFF_ROLES} />}>
-            <Route path="/coach" element={<Suspense fallback={<RouteFallback />}><CoachConsole /></Suspense>} />
-          </Route>
-          <Route element={<RoleRoute allow={STAFF_ROLES} />}>
-            <Route path="/admin" element={<Suspense fallback={<RouteFallback />}><AdminPanel /></Suspense>} />
+            <Route path="/workspace" element={<Suspense fallback={<RouteFallback />}><CoachWorkspace /></Suspense>} />
           </Route>
         </Route>
       </Route>

@@ -6,9 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ClipboardList, ArrowLeft, AlertTriangle, Send } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Send } from "lucide-react";
+import { Stat } from "./WorkspaceShared";
 
-export default function CoachConsole() {
+/**
+ * Hosts tab — the former Coach Console. Lists every host onboarding profile,
+ * with a read-only detail view (progress, deals, landlords) and the ability to
+ * leave feedback. Host data is never edited here.
+ */
+export default function HostsTab() {
   const [profiles, setProfiles] = useState([]);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -67,7 +73,9 @@ export default function CoachConsole() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
+  if (loading) return (
+    <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>
+  );
   if (loadError) return (
     <div className="space-y-4 py-10 text-center">
       <p className="text-brand-mutedtext">We couldn't load your hosts right now.</p>
@@ -88,7 +96,7 @@ export default function CoachConsole() {
         <Button variant="ghost" onClick={() => setSelected(null)} className="text-brand-mutedtext hover:text-brand-text"><ArrowLeft className="w-4 h-4 mr-1" /> Back to hosts</Button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-brand-text">{p.created_by}</h1>
+            <h2 className="text-2xl font-bold text-brand-text">{p.created_by}</h2>
             <p className="text-brand-mutedtext text-sm">{p.target_market_city} · Day {currentDay} · Week {week} · {p.goal_28_day}</p>
           </div>
           {behind && <Badge className="bg-amber-500/15 text-amber-400"><AlertTriangle className="w-3 h-3 mr-1" />At-risk</Badge>}
@@ -143,10 +151,10 @@ export default function CoachConsole() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-text flex items-center gap-2"><ClipboardList className="w-6 h-6 text-brand-gold" /> Coach Console</h1>
-        <p className="text-brand-mutedtext text-sm">Hosts assigned to you. You can view artifacts and leave feedback — not edit host data.</p>
+        <h2 className="text-lg font-semibold text-brand-text">Hosts</h2>
+        <p className="text-brand-mutedtext text-sm">Every host in the program. You can view artifacts and leave feedback — not edit host data.</p>
       </div>
-      {profiles.length === 0 && <p className="text-sm text-brand-mutedtext">No hosts assigned yet. An admin can assign hosts to you from the Admin panel.</p>}
+      {profiles.length === 0 && <p className="text-sm text-brand-mutedtext">No hosts yet.</p>}
       <div className="space-y-2">
         {profiles.map((p) => {
           const currentDay = getCurrentDay(p.start_date);
@@ -165,11 +173,5 @@ export default function CoachConsole() {
         })}
       </div>
     </div>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <Card className="border-brand-line"><CardContent className="py-3"><div className="text-2xl font-bold text-brand-text">{value}</div><div className="text-xs text-brand-mutedtext">{label}</div></CardContent></Card>
   );
 }

@@ -10,8 +10,8 @@ export default function Home() {
   const role = user?.role || "host";
   const { profile, loading } = useHostProfile();
 
-  if (role === "admin") return <Navigate to="/admin" replace />;
-  if (role === "coach") return <Navigate to="/coach" replace />;
+  if (role === "admin") return <Navigate to="/workspace" replace />;
+  if (role === "coach") return <Navigate to="/workspace" replace />;
 
   if (loading) {
     return (

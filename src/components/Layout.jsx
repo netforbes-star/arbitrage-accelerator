@@ -1,34 +1,84 @@
 import { useState } from "react";
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
-import { STAFF_ROLES } from "@/lib/roles";
+import { isStaff } from "@/lib/roles";
 import { base44 } from "@/api/base44Client";
-import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, MapPin, Users, FileText, ClipboardList, Shield, LogOut, Download } from "lucide-react";
+import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, MapPin, Users, FileText, Shield, LogOut, Download, BookOpen } from "lucide-react";
 
-const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["host", ...STAFF_ROLES] },
-  { to: "/program", label: "Program", icon: CalendarDays, roles: ["host", ...STAFF_ROLES] },
-  { to: "/deals", label: "Deal Analyzer", icon: Calculator, roles: ["host", ...STAFF_ROLES] },
-  { to: "/markets", label: "Markets", icon: MapPin, roles: ["host", ...STAFF_ROLES] },
-  { to: "/landlords", label: "Landlords", icon: Users, roles: ["host", ...STAFF_ROLES] },
-  { to: "/export", label: "Download", icon: Download, roles: ["host", ...STAFF_ROLES] },
-  { to: "/templates", label: "Templates", icon: FileText, roles: ["host", ...STAFF_ROLES] },
-  { to: "/coach", label: "Coach Console", icon: ClipboardList, roles: STAFF_ROLES },
-  { to: "/admin", label: "Admin", icon: Shield, roles: STAFF_ROLES }
+// Primary host workflow, in journey order.
+const PRIMARY = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/markets", label: "Market Analyzer", icon: MapPin },
+  { to: "/deals", label: "Deal Analyzer", icon: Calculator },
+  { to: "/landlords", label: "Landlord Pipeline", icon: Users },
+  { to: "/program", label: "Program", icon: CalendarDays }
+];
+
+// Supporting tools — available, but visually demoted so they don't compete.
+const SECONDARY = [
+  { to: "/resources", label: "Resources", icon: BookOpen },
+  { to: "/templates", label: "Templates", icon: FileText },
+  { to: "/export", label: "Download", icon: Download }
+];
+
+// Staff-only workspace, separated at the bottom.
+const STAFF = [
+  { to: "/workspace", label: "Coach Workspace", icon: Shield }
 ];
 
 export default function Layout() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const role = user?.role || "host";
-  const items = NAV.filter((i) => i.roles.includes(role));
+  const staff = isStaff(user?.role);
 
   const handleLogout = () => { base44.auth.logout(); };
 
-  const linkClass = ({ isActive }) =>
+  const primaryClass = ({ isActive }) =>
     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
       isActive ? "bg-brand-gold text-brand-ink" : "text-brand-mutedtext hover:bg-brand-raised hover:text-brand-text"
     }`;
+
+  const secondaryClass = ({ isActive }) =>
+    `flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+      isActive ? "text-brand-gold" : "text-brand-mutedtext/80 hover:text-brand-text"
+    }`;
+
+  const staffClass = ({ isActive }) =>
+    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+      isActive ? "bg-brand-gold text-brand-ink" : "text-brand-mutedtext hover:bg-brand-raised hover:text-brand-text"
+    }`;
+
+  const NavGroups = ({ onNavigate }) => (
+    <>
+      <nav className="space-y-1">
+        {PRIMARY.map((i) => (
+          <NavLink key={i.to} to={i.to} end={i.to === "/"} onClick={onNavigate} className={primaryClass}>
+            <i.icon className="w-4 h-4" />{i.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="my-3 border-t border-brand-line" />
+      <nav className="space-y-0.5">
+        {SECONDARY.map((i) => (
+          <NavLink key={i.to} to={i.to} end={i.to === "/"} onClick={onNavigate} className={secondaryClass}>
+            <i.icon className="w-3.5 h-3.5" />{i.label}
+          </NavLink>
+        ))}
+      </nav>
+      {staff && (
+        <>
+          <div className="my-3 border-t border-brand-line" />
+          <nav className="space-y-1">
+            {STAFF.map((i) => (
+              <NavLink key={i.to} to={i.to} onClick={onNavigate} className={staffClass}>
+                <i.icon className="w-4 h-4" />{i.label}
+              </NavLink>
+            ))}
+          </nav>
+        </>
+      )}
+    </>
+  );
 
   const Brand = () => (
     <div className="flex items-center gap-2.5">
@@ -57,13 +107,9 @@ export default function Layout() {
               <Brand />
               <button onClick={() => setOpen(false)} className="p-2 -mr-2 text-brand-mutedtext"><X className="w-5 h-5" /></button>
             </div>
-            <nav className="flex-1 space-y-1">
-              {items.map((i) => (
-                <NavLink key={i.to} to={i.to} end={i.to === "/"} onClick={() => setOpen(false)} className={linkClass}>
-                  <i.icon className="w-4 h-4" />{i.label}
-                </NavLink>
-              ))}
-            </nav>
+            <div className="flex-1 overflow-y-auto">
+              <NavGroups onNavigate={() => setOpen(false)} />
+            </div>
             <SidebarFooter email={user?.email} onLogout={handleLogout} />
           </div>
         </div>
@@ -71,13 +117,9 @@ export default function Layout() {
 
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-brand-surface border-r border-brand-line flex-col p-4">
         <div className="mb-8 px-2 pt-2"><Brand /></div>
-        <nav className="flex-1 space-y-1">
-          {items.map((i) => (
-            <NavLink key={i.to} to={i.to} end={i.to === "/"} className={linkClass}>
-              <i.icon className="w-4 h-4" />{i.label}
-            </NavLink>
-          ))}
-        </nav>
+        <div className="flex-1 overflow-y-auto">
+          <NavGroups />
+        </div>
         <SidebarFooter email={user?.email} onLogout={handleLogout} />
       </aside>
 
