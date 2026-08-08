@@ -168,8 +168,8 @@ for (const name of HOST_OWNED) {
   for (const f of src) for (const [re, label] of pats)
     if (re.test(read(f))) { bad('D leak: ' + label, f.replace(ROOT + '/', '')); leaks++; }
   if (!leaks) ok('D1 no hardcoded credentials or secrets in source');
-  chk(!/\.(password|password_hash|token|session)/.test(read(at('src/pages/AdminPanel.jsx'))),
-    'D2 admin panel renders no authentication material');
+  chk(!/\.(password|password_hash|token|session)/.test(read(at('src/pages/CoachWorkspace.jsx'))),
+    'D2 staff workspace renders no authentication material');
 }
 
 /* ── E. DARK THEME CONTRAST (WCAG) ────────────────────────────────────── */
@@ -281,7 +281,7 @@ for (const name of HOST_OWNED) {
 
 /* ── J. FAILURE HANDLING ─────────────────────────────────────────────── */
 {
-  const WORKFLOWS = ['DealAnalyzer', 'MarketAnalyzer', 'LandlordCRM', 'Onboarding', 'AdminPanel', 'CoachConsole'];
+  const WORKFLOWS = ['DealAnalyzer', 'MarketAnalyzer', 'LandlordCRM', 'Onboarding', 'CoachWorkspace', 'Resources'];
   for (const w of WORKFLOWS) {
     const c = read(at(`src/pages/${w}.jsx`));
     chk(/try\s*\{/.test(c) && /catch/.test(c), `J ${w}: guarded with try/catch`);
