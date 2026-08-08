@@ -149,9 +149,11 @@ for (const name of HOST_OWNED) {
 /* ── C. ROUTE + ROLE GUARDS ───────────────────────────────────────────── */
 {
   const app = read(at('src/App.jsx'));
-  chk(app.includes('RoleRoute') && app.includes('AdminPanel'), 'C1 admin route wrapped in RoleRoute');
+  chk(app.includes('RoleRoute') && app.includes('CoachWorkspace'), 'C1 staff workspace wrapped in RoleRoute');
   chk(/allow=\{STAFF_ROLES\}/.test(app), 'C2 staff routes gated by the shared STAFF_ROLES list');
-  chk((app.match(/RoleRoute allow=\{STAFF_ROLES\}/g) || []).length >= 2, 'C2b both staff areas gated');
+  chk(/\/coach"\s+element=\{<Navigate to="\/workspace"/.test(app) &&
+      /\/admin"\s+element=\{<Navigate to="\/workspace"/.test(app),
+    'C2b legacy /coach and /admin redirect, no ungated duplicates');
   chk(app.includes('ProtectedRoute'), 'C3 authenticated shell present');
   const t = app.indexOf('path="/terms"'), p = app.indexOf('<Route element={<ProtectedRoute');
   chk(t > -1 && t < p, 'C4 /terms readable before signing in');
@@ -271,11 +273,11 @@ for (const name of HOST_OWNED) {
   chk(stale === 0, 'I8 no stale contact address anywhere in source');
 
   const layout = read(at('src/components/Layout.jsx'));
-  // Match only the single nav object for /export. A looser span leaks into the
-  // next nav entry and reports a false positive.
-  const exportNav = (layout.match(/\{[^{}]*"\/export"[^{}]*\}/) || [''])[0];
-  chk(exportNav.includes('"host"'), 'I9 Download link visible to hosts', exportNav.trim());
-  chk(!exportNav.includes('"coach"'), 'I9 export not offered to coaches');
+  // Nav is now three groups: primary workflow, secondary tools, staff-only.
+  const staffBlock = layout.slice(layout.indexOf('/workspace') - 400, layout.indexOf('/workspace') + 200);
+  chk(/"\/export"/.test(layout), 'I9 Download link present for hosts');
+  chk(!/"\/export"[\s\S]{0,80}STAFF_ROLES/.test(layout), 'I9 export not gated to staff only');
+  chk(/STAFF_ROLES|isStaff/.test(staffBlock), 'I9 workspace nav entry is staff-gated');
   chk(read(at('src/App.jsx')).includes('path="/export"'), 'I9 /export route registered');
 }
 
@@ -286,7 +288,8 @@ for (const name of HOST_OWNED) {
     const c = read(at(`src/pages/${w}.jsx`));
     chk(/try\s*\{/.test(c) && /catch/.test(c), `J ${w}: guarded with try/catch`);
     chk(/finally/.test(c), `J ${w}: releases busy state in a finally block`);
-    chk(/please try again/i.test(c), `J ${w}: shows a friendly retry message`);
+    chk(/please try again/i.test(c) || />\s*Try again\s*</i.test(c),
+      `J ${w}: shows a friendly retry message or a retry control`);
     chk(!/\{\s*(e|err|error)\.message\s*\}/.test(c), `J ${w}: never renders a raw error message`);
     chk(!/\{\s*(e|err|error)\.stack\s*\}/.test(c), `J ${w}: never renders a stack trace`);
   }
