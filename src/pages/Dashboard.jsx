@@ -7,10 +7,11 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import ProgressRing from "@/components/ProgressRing";
 import { getCurrentDay, daysRemaining, dayDate, WEEK_THEMES } from "@/lib/curriculum";
-import { Users, MessageSquare, Calculator, Handshake, CheckCircle2, Clock, ArrowRight, LifeBuoy, Download } from "lucide-react";
+import { Users, MessageSquare, Calculator, Handshake, CheckCircle2, Clock, ArrowRight, LifeBuoy, Download, Trophy } from "lucide-react";
 import { downloadAll } from "@/lib/exportData";
 import { logAudit } from "@/lib/audit";
 import { useToast } from "@/components/ui/use-toast";
+import { friendlyError } from "@/lib/friendlyError";
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   const handleExport = async () => {
     setExporting(true);
@@ -29,7 +31,7 @@ export default function Dashboard() {
       await logAudit("data_export", `all datasets (${total} records)`);
       toast({ title: "Export ready", description: `${total} record${total === 1 ? "" : "s"} exported.` });
     } catch (e) {
-      toast({ title: "Export failed", description: e.message || "Please try again." });
+      toast({ title: "Export failed", description: friendlyError(e, "We couldn't build your download. Try again in a moment.") });
     } finally {
       setExporting(false);
     }
@@ -50,6 +52,8 @@ export default function Dashboard() {
         setProgress(pr);
         setDeals(de);
         setLandlords(ll);
+      } catch (e) {
+        setLoadError(friendlyError(e, "We couldn't load your dashboard. Refresh the page to try again."));
       } finally {
         setLoading(false);
       }
@@ -196,7 +200,7 @@ export default function Dashboard() {
                 <p className="text-xs text-brand-mutedtext mb-3">You're a touch behind pace. That's okay — here are warm options:</p>
                 <div className="space-y-2 text-xs">
                   <Link to="/program" className="block w-full text-left p-2 rounded border border-brand-line hover:bg-brand-raised text-brand-text">Drop a non-gate task</Link>
-                  <Link to="/coach" className="block w-full text-left p-2 rounded border border-brand-line hover:bg-brand-raised text-brand-text">Book a coaching call</Link>
+                  <Link to="/resources" className="block w-full text-left p-2 rounded border border-brand-line hover:bg-brand-raised text-brand-text">Get unstuck with a resource</Link>
                 </div>
               </CardContent>
             </Card>
