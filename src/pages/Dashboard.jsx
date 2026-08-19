@@ -115,6 +115,22 @@ export default function Dashboard() {
         <Link to="/program"><Button variant="outline" className="border-brand-line text-brand-text">Open program <ArrowRight className="w-4 h-4 ml-1" /></Button></Link>
       </div>
 
+      {loadError && (
+        <div className="p-4 rounded-lg border border-red-500/40 bg-red-500/10 text-sm text-red-300">{loadError}</div>
+      )}
+
+      {!loadError && days.length === 0 && (
+        <Card className="border-brand-gold/40 bg-brand-gold/5">
+          <CardContent className="py-6 text-center space-y-2">
+            <h2 className="text-base font-semibold text-brand-text">Your program is being set up</h2>
+            <p className="text-sm text-brand-mutedtext max-w-md mx-auto">
+              Your 28-day plan hasn't loaded yet. Nothing is wrong on your end — reach out to your coach and we'll get
+              it switched on. Your analyzers and pipeline work in the meantime.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid sm:grid-cols-3 gap-4">
         <Card className="border-brand-line">
           <CardContent className="flex items-center gap-4 py-5">
@@ -189,6 +205,25 @@ export default function Dashboard() {
               <div className="text-sm font-medium text-brand-text">{nextBest}</div>
             </CardContent>
           </Card>
+
+          {currentDay >= 21 && (
+            <Card className="border-brand-line">
+              <CardContent className="py-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="w-4 h-4 text-brand-gold" />
+                  <div className="text-sm font-semibold text-brand-text">Your 28-day results</div>
+                </div>
+                <p className="text-xs text-brand-mutedtext mb-3">
+                  See what your funnel actually produced — and what it says to do next.
+                </p>
+                <Link to="/graduation">
+                  <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90 h-9 text-sm">
+                    Open my results
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
           {behind && (
             <Card className="border-brand-line">
