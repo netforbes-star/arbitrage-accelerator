@@ -506,9 +506,16 @@ for (const name of HOST_OWNED) {
   const hostPages = appFiles.filter((f) => /\/pages\//.test(f) && !/CoachWorkspace/.test(f));
   const badLinks = [];
   for (const f of hostPages) {
-    if (/to="\/(coach|admin|workspace)"/.test(read(f))) badLinks.push(path.basename(f));
+    const body = read(f);
+    // A <Navigate> inside a role check is a legitimate staff redirect; only a
+    // link a host can actually click is a dead end for them.
+    const clickable = body.match(/<(?:Link|NavLink)\b[^>]*\bto="\/(coach|admin|workspace)"/g) || [];
+    if (clickable.length) badLinks.push(path.basename(f));
   }
-  chk(badLinks.length === 0, 'N6 no host screen links to a staff-only route', badLinks.join(', ') || 'none');
+  chk(badLinks.length === 0, 'N6 no host screen links a host to a staff-only route', badLinks.join(', ') || 'none');
+  // Guard the specific regression this replaced: the Dashboard recalibrate card
+  // used to send a stuck host to /coach, which bounces them straight back.
+  chk(!/<Link[^>]*to="\/coach"/.test(dash), 'N6 recalibrate card no longer sends hosts to /coach');
 }
 
 /* ── REPORT ───────────────────────────────────────────────────────────── */
