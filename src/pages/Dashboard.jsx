@@ -12,6 +12,8 @@ import { downloadAll } from "@/lib/exportData";
 import { logAudit } from "@/lib/audit";
 import { useToast } from "@/components/ui/use-toast";
 import { friendlyError } from "@/lib/friendlyError";
+import WeeklyCallCard from "@/components/WeeklyCallCard";
+import { CALL_BOOKING_URL } from "@/lib/programConfig";
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
@@ -205,6 +207,8 @@ export default function Dashboard() {
               <div className="text-sm font-medium text-brand-text">{nextBest}</div>
             </CardContent>
           </Card>
+
+          <WeeklyCallCard week={weekNum} bookingUrl={CALL_BOOKING_URL} />
 
           {currentDay >= 21 && (
             <Card className="border-brand-line">
