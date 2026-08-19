@@ -58,6 +58,17 @@ export default function TemplateVault() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-mutedtext" />
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search templates…" className="pl-9" />
           </div>
+          {templates.length === 0 && (
+            <div className="p-4 rounded-lg border border-brand-gold/40 bg-brand-gold/5 text-sm text-brand-mutedtext">
+              Your templates haven't loaded yet. Nothing is wrong on your end — reach out to your coach and we'll get
+              them switched on.
+            </div>
+          )}
+          {templates.length > 0 && filtered.length === 0 && (
+            <div className="p-4 rounded-lg border border-brand-line text-sm text-brand-mutedtext">
+              No template matches "{query}". Try a different word.
+            </div>
+          )}
           {filtered.map((t) => (
             <button key={t.id} onClick={() => setActive(t)} className={`w-full text-left p-3 rounded-lg border ${active?.id === t.id ? "border-brand-gold bg-brand-gold/10" : "border-brand-line bg-brand-surface hover:bg-brand-raised"}`}>
               <div className="text-sm font-medium text-brand-text">{t.title}</div>
