@@ -3,7 +3,7 @@ import { NavLink, Outlet, Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { isStaff } from "@/lib/roles";
 import { base44 } from "@/api/base44Client";
-import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, MapPin, Users, FileText, Shield, LogOut, Download, BookOpen } from "lucide-react";
+import { Menu, X, Stethoscope, LayoutDashboard, CalendarDays, Calculator, MapPin, Users, FileText, Shield, LogOut, Download, BookOpen, Trophy } from "lucide-react";
 
 // Primary host workflow, in journey order.
 const PRIMARY = [
@@ -18,6 +18,7 @@ const PRIMARY = [
 const SECONDARY = [
   { to: "/resources", label: "Resources", icon: BookOpen },
   { to: "/templates", label: "Templates", icon: FileText },
+  { to: "/graduation", label: "My Results", icon: Trophy },
   { to: "/export", label: "Download", icon: Download }
 ];
 
