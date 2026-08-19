@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { dayDate, WEEK_THEMES, WEEK_BLURBS } from "@/lib/curriculum";
 import { CheckCircle2, Circle, Lock, SkipForward, ShieldCheck } from "lucide-react";
 import BuyBoxSection from "@/components/BuyBoxSection";
+import { friendlyError } from "@/lib/friendlyError";
+import { useToast } from "@/components/ui/use-toast";
 import ObjectionSection from "@/components/ObjectionSection";
 
 export default function Program() {
@@ -20,17 +22,27 @@ export default function Program() {
   const [loading, setLoading] = useState(true);
   const [skipFor, setSkipFor] = useState(null);
   const [skipReason, setSkipReason] = useState("");
+  const [busyTask, setBusyTask] = useState(null);
+  const [skipping, setSkipping] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const { toast } = useToast();
 
   const load = async () => {
-    const [p, d, pr] = await Promise.all([
-      base44.entities.OnboardingProfile.list("-created_date", 1),
-      base44.entities.ProgramDay.list("day", 50),
-      base44.entities.UserTaskProgress.list("-created_date", 200)
-    ]);
-    setProfile(p[0] || null);
-    setDays(d.sort((a, b) => a.day - b.day));
-    setProgress(pr);
-    setLoading(false);
+    try {
+      const [p, d, pr] = await Promise.all([
+        base44.entities.OnboardingProfile.list("-created_date", 1),
+        base44.entities.ProgramDay.list("day", 50),
+        base44.entities.UserTaskProgress.list("-created_date", 200)
+      ]);
+      setProfile(p[0] || null);
+      setDays(d.sort((a, b) => a.day - b.day));
+      setProgress(pr);
+      setLoadError("");
+    } catch (e) {
+      setLoadError(friendlyError(e, "We couldn't load your program. Refresh the page to try again."));
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -50,31 +62,57 @@ export default function Program() {
   const weekUnlocked = (week) => week === 1 || gateDaysUpTo(week).every((d) => dayComplete(d));
 
   const toggle = async (day, taskIndex) => {
-    const existing = progMap[`${day}-${taskIndex}`];
+    const key = `${day}-${taskIndex}`;
+    if (busyTask) return;
+    const existing = progMap[key];
     const nowComplete = !isComplete(day, taskIndex);
-    if (existing) {
-      await base44.entities.UserTaskProgress.update(existing.id, {
-        status: nowComplete ? "complete" : "pending",
-        completed_date: nowComplete ? new Date().toISOString().slice(0, 10) : null
+    setBusyTask(key);
+    try {
+      if (existing) {
+        await base44.entities.UserTaskProgress.update(existing.id, {
+          status: nowComplete ? "complete" : "pending",
+          completed_date: nowComplete ? new Date().toISOString().slice(0, 10) : null
+        });
+      } else {
+        await base44.entities.UserTaskProgress.create({
+          day, task_index: taskIndex,
+          status: nowComplete ? "complete" : "pending",
+          completed_date: nowComplete ? new Date().toISOString().slice(0, 10) : null
+        });
+      }
+      await load();
+    } catch (e) {
+      // A silently-dropped save on a gate task would let a host believe they
+      // had unlocked the next week. Always say so out loud.
+      toast({
+        title: "That didn't save",
+        description: friendlyError(e, "We couldn't record that task. Check your connection and tap it again.")
       });
-    } else {
-      await base44.entities.UserTaskProgress.create({
-        day, task_index: taskIndex,        status: nowComplete ? "complete" : "pending",
-        completed_date: nowComplete ? new Date().toISOString().slice(0, 10) : null
-      });
+    } finally {
+      setBusyTask(null);
     }
-    load();
   };
 
   const doSkip = async () => {
-    if (!skipFor) return;
+    if (!skipFor || skipping) return;
     const { day, taskIndex } = skipFor;
     const existing = progMap[`${day}-${taskIndex}`];
     const payload = { status: "skipped", skipped_reason: skipReason || "Skipped" };
-    if (existing) await base44.entities.UserTaskProgress.update(existing.id, payload);
-    else await base44.entities.UserTaskProgress.create({ day, task_index: taskIndex, ...payload });
-    setSkipFor(null); setSkipReason("");
-    load();
+    setSkipping(true);
+    try {
+      if (existing) await base44.entities.UserTaskProgress.update(existing.id, payload);
+      else await base44.entities.UserTaskProgress.create({ day, task_index: taskIndex, ...payload });
+      setSkipFor(null);
+      setSkipReason("");
+      await load();
+    } catch (e) {
+      toast({
+        title: "That didn't save",
+        description: friendlyError(e, "We couldn't log that skip. Check your connection and try again.")
+      });
+    } finally {
+      setSkipping(false);
+    }
   };
 
   return (
