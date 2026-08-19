@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, AlertTriangle, Send } from "lucide-react";
 import { Stat } from "./WorkspaceShared";
+import { dealStatusShortLabel } from "@/lib/dealMath";
 
 /**
  * Hosts tab — the former Coach Console. Lists every host onboarding profile,
@@ -115,7 +116,7 @@ export default function HostsTab() {
             {detail.deals.length === 0 ? <p className="text-sm text-brand-mutedtext">No deals yet.</p> : detail.deals.map((d) => (
               <div key={d.id} className="flex items-center justify-between py-1.5 border-b border-brand-line last:border-0">
                 <span className="text-sm text-brand-text">{d.nickname}</span>
-                <Badge variant="outline" className="text-xs border-brand-line text-brand-mutedtext">{d.status}</Badge>
+                <Badge variant="outline" className="text-xs border-brand-line text-brand-mutedtext">{dealStatusShortLabel(d.status)}</Badge>
               </div>
             ))}
           </CardContent>
