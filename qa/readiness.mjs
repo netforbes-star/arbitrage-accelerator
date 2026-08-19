@@ -518,6 +518,69 @@ for (const name of HOST_OWNED) {
   chk(!/<Link[^>]*to="\/coach"/.test(dash), 'N6 recalibrate card no longer sends hosts to /coach');
 }
 
+/* ── O. SPRINT OUTCOME — WHAT THE PROGRAM PROMISED ───────────────────── */
+/* The sprint's success bar is a signed lease OR an active prospect headed    */
+/* toward one, produced in four weeks. These checks hold the app to that.     */
+{
+  const grad = read(at('src/pages/Graduation.jsx'));
+  const prog = read(at('src/pages/Program.jsx'));
+  const dash = read(at('src/pages/Dashboard.jsx'));
+
+  /* O1 — A warm prospect is a met outcome, not a near-miss. */
+  chk(/hasWarmProspect/.test(grad), 'O1 Graduation recognises an active prospect as an outcome');
+  chk(/activeProspects/.test(grad) && /negotiating/.test(grad), 'O1 active negotiations counted toward the outcome');
+  chk(/outcomeMet/.test(grad), 'O1 the sprint outcome is stated explicitly on the results screen');
+  chk(/Sprint outcome/i.test(grad), 'O1 results screen names the outcome bar for the host');
+  chk(!/didn't close[\s\S]{0,200}hasWarmProspect/.test(grad),
+    'O1 a host with a live negotiation is never told they failed to close');
+  chk(/signed === 0 && !hasWarmProspect/.test(grad),
+    'O1 the consolation note is suppressed when the bar was met');
+  chk(/Live prospects at the table/.test(grad), 'O1 prospects surface as a headline result, not a footnote');
+
+  /* O2 — Delivery is rehearsed, not just written. */
+  const drillPath = at('src/components/MockPitchDrill.jsx');
+  chk(fs.existsSync(drillPath), 'O2 a mock pitch drill exists');
+  const drill = read(drillPath);
+  chk(/MockPitchDrill/.test(prog), 'O2 the drill is reachable inside the program');
+  for (const round of ['cold open', 'subletting', 'trash', 'repair', 'flat no']) {
+    chk(new RegExp(round, 'i').test(drill), `O2 drill covers: ${round}`);
+  }
+  chk(/Airbnb/.test(drill) && /corporate leasing/.test(drill),
+    'O2 drill warns about the two trigger words that earn an instant no');
+  chk(/seconds:/.test(drill), 'O2 drill is timed — delivery is practised under pressure');
+  // A rehearsal tool must not quietly become a new data surface.
+  chk(!/base44\.entities/.test(drill), 'O2 drill stores nothing — no new data surface');
+  chk(/Nothing is recorded or uploaded|no audio|not recorded/i.test(drill),
+    'O2 drill tells the host nothing is recorded');
+
+  /* O3 — The weekly calls exist inside the product. */
+  const callPath = at('src/components/WeeklyCallCard.jsx');
+  chk(fs.existsSync(callPath), 'O3 the weekly coaching call has a home in the app');
+  const call = read(callPath);
+  chk(/WeeklyCallCard/.test(dash), 'O3 call prep surfaces on the Dashboard');
+  for (const wk of ['1', '2', '3', '4']) chk(new RegExp(`\\s${wk}:\\s*\\{`).test(call), `O3 week ${wk} has its own agenda`);
+  chk(/We decide|decide:/.test(call), 'O3 each call drives to a decision, not a status update');
+  chk(/bookingUrl/.test(call), 'O3 booking link is supported');
+  chk(/coach will send/i.test(call), 'O3 missing booking link degrades gracefully');
+  const cfg = read(at('src/lib/programConfig.js'));
+  chk(/CALL_BOOKING_URL/.test(cfg), 'O3 booking link is configurable in one place');
+
+  /* O4 — Lease protection the sprint sold is actually in the curriculum. */
+  const seed = read(at('base44/functions/seedContent/entry.ts'));
+  chk(/repair-response window/i.test(seed), 'O4 written repair-response window is a curriculum task');
+  chk(/48h urgent/i.test(seed), 'O4 repair window is specific, not a vague promise');
+  chk(/\$200 repair threshold/.test(seed), 'O4 the $200 self-handled threshold survives');
+  chk(/30-day exit/.test(seed), 'O4 exit terms survive');
+  chk(/STR permission addendum/.test(seed), 'O4 sublet permission addendum survives');
+  chk(/mock pitch drill/i.test(seed), 'O4 rehearsal is a scheduled task, not an optional extra');
+
+  /* O5 — The four weeks still end where the guarantee says they do. */
+  chk(/day: 20, gate: true/.test(seed), 'O5 written permission remains a hard gate');
+  chk(/day: 22[\s\S]{0,400}lease signed/.test(seed), 'O5 week 4 still drives to signature');
+  chk(/GATE_DAYS = \[1, 3, 5, 8, 12, 16, 20\]/.test(read(at('src/lib/curriculum.js'))),
+    'O5 gate days unchanged — the spine of the four weeks holds');
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
