@@ -122,6 +122,26 @@ export default function Program() {
         <p className="text-brand-mutedtext text-sm">Days unlock sequentially. Gate tasks must be complete before the next week opens.</p>
       </div>
 
+      {loadError && (
+        <div className="p-4 rounded-lg border border-red-500/40 bg-red-500/10 text-sm text-red-300">
+          {loadError}
+        </div>
+      )}
+
+      {!loadError && days.length === 0 && (
+        <Card className="border-brand-gold/40 bg-brand-gold/5">
+          <CardContent className="py-8 text-center space-y-2">
+            <ShieldCheck className="w-8 h-8 text-brand-gold mx-auto" />
+            <h2 className="text-lg font-semibold text-brand-text">Your program is being set up</h2>
+            <p className="text-sm text-brand-mutedtext max-w-md mx-auto">
+              The 28-day curriculum hasn't loaded yet. This is on our side, not yours — reach out to your coach and
+              we'll have it ready for you.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {days.length > 0 && (
       <Tabs defaultValue="1">
         <TabsList className="grid grid-cols-4 w-full max-w-md">
           {[1, 2, 3, 4].map((w) => <TabsTrigger key={w} value={String(w)}>Week {w}</TabsTrigger>)}
@@ -165,8 +185,15 @@ export default function Program() {
                         const skipped = progMap[`${d.day}-${i}`]?.status === "skipped";
                         return (
                           <div key={i} className={`flex items-start gap-3 p-2.5 rounded-lg border ${skipped ? "border-brand-line bg-brand-raised opacity-60" : "border-brand-line"}`}>
-                            <button onClick={() => toggle(d.day, i)} disabled={!unlocked} className="mt-0.5">
-                              {complete ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Circle className="w-5 h-5 text-brand-mutedtext" />}
+                            <button
+                              onClick={() => toggle(d.day, i)}
+                              disabled={!unlocked || busyTask === `${d.day}-${i}`}
+                              aria-busy={busyTask === `${d.day}-${i}`}
+                              className="mt-0.5 disabled:opacity-60"
+                            >
+                              {busyTask === `${d.day}-${i}`
+                                ? <span className="block w-5 h-5 border-2 border-brand-line border-t-brand-gold rounded-full animate-spin" />
+                                : complete ? <CheckCircle2 className="w-5 h-5 text-green-400" /> : <Circle className="w-5 h-5 text-brand-mutedtext" />}
                             </button>
                             <div className="flex-1">
                               <div className={`text-sm font-medium ${complete ? "line-through text-brand-mutedtext" : "text-brand-text"}`}>{t.title}</div>
@@ -191,6 +218,7 @@ export default function Program() {
           );
         })}
       </Tabs>
+      )}
 
       {skipFor && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setSkipFor(null)}>
@@ -200,7 +228,7 @@ export default function Program() {
             <Textarea rows={3} value={skipReason} onChange={(e) => setSkipReason(e.target.value)} className="mt-1" placeholder="Why are you skipping?" />
             <div className="flex gap-2 mt-3">
               <Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setSkipFor(null)}>Cancel</Button>
-              <Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" disabled={!skipReason} onClick={doSkip}>Skip & log</Button>
+              <Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" disabled={!skipReason || skipping} onClick={doSkip}>{skipping ? "Saving…" : "Skip & log"}</Button>
             </div>
           </div>
         </div>
