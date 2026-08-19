@@ -424,6 +424,93 @@ for (const name of HOST_OWNED) {
   chk(/name="description"/.test(html), 'M meta description present for sharing');
 }
 
+/* ── N. HOST JOURNEY — DEAD ENDS, EMPTY STATES, FAILURE VISIBILITY ────── */
+/* Added after a walkthrough audit of the app from a host's point of view.  */
+{
+  const layout = read(at('src/components/Layout.jsx'));
+  const dash = read(at('src/pages/Dashboard.jsx'));
+  const prog = read(at('src/pages/Program.jsx'));
+  const grad = read(at('src/pages/Graduation.jsx'));
+  const vault = read(at('src/pages/TemplateVault.jsx'));
+  const app = read(at('src/App.jsx'));
+
+  /* N1 — Graduation must be reachable. The whole 28 days ends there. */
+  chk(/to:\s*"\/graduation"/.test(layout), 'N1 Graduation reachable from the sidebar');
+  chk(/to="\/graduation"/.test(dash), 'N1 Graduation reachable from the Dashboard');
+  chk(/to="\/graduation"/.test(prog), 'N1 Graduation reachable from Day 28 in the Program');
+  chk(/path="\/graduation"/.test(app), 'N1 /graduation route still registered');
+
+  // ...and must not be a dead end itself.
+  chk(/to="\/program"/.test(grad) && /to="\/"/.test(grad), 'N1 Graduation links back out to program and dashboard');
+  chk(!/window\.history\.back/.test(grad), 'N1 Graduation uses real links, not browser history');
+
+  /* N2 — Unseeded curriculum must explain itself, not look broken. */
+  chk(/days\.length === 0/.test(prog), 'N2 Program handles an unseeded curriculum');
+  chk(/being set up/i.test(prog), 'N2 Program explains an empty curriculum in plain language');
+  chk(/days\.length === 0/.test(dash), 'N2 Dashboard handles an unseeded curriculum');
+  chk(/being set up/i.test(dash), 'N2 Dashboard explains an empty curriculum in plain language');
+  chk(/templates\.length === 0/.test(vault), 'N2 Template Vault handles an empty vault');
+  chk(!/All caught up/.test(dash.split('days.length === 0')[0]),
+    'N2 empty curriculum is not mistaken for a finished day');
+
+  /* N3 — Every host-facing mutation reports failure. A silent drop on a gate
+     task lets a host believe they unlocked a week they have not. */
+  for (const [label, body] of [['Program', prog], ['Graduation', grad]]) {
+    const tries = (body.match(/try\s*\{/g) || []).length;
+    const catches = (body.match(/catch\s*\(/g) || []).length;
+    chk(tries > 0 && catches >= tries, `N3 ${label} guards every try with a catch`);
+  }
+  chk(/const toggle = async[\s\S]{0,900}?catch/.test(prog), 'N3 Program.toggle reports a failed save');
+  chk(/const doSkip = async[\s\S]{0,900}?catch/.test(prog), 'N3 Program.doSkip reports a failed save');
+  chk(/const toggle = async[\s\S]{0,1200}?finally/.test(prog), 'N3 Program.toggle clears busy state in finally');
+  chk(/const doSkip = async[\s\S]{0,1200}?finally/.test(prog), 'N3 Program.doSkip clears busy state in finally');
+  chk(/busyTask/.test(prog), 'N3 Program shows a busy state while a task saves');
+  chk(/setLoadError|loadError/.test(prog), 'N3 Program surfaces a failed load instead of an eternal spinner');
+  chk(/setLoadError|loadError/.test(dash), 'N3 Dashboard surfaces a failed load');
+  chk(/catch/.test(grad) && /setError/.test(grad), 'N3 Graduation surfaces a failed load');
+
+  /* N4 — No raw platform error text ever reaches a host. */
+  const helper = at('src/lib/friendlyError.js');
+  chk(fs.existsSync(helper), 'N4 a shared friendly-error helper exists');
+  const leaks = [];
+  for (const f of appFiles) {
+    const body = read(f);
+    if (/(setError|description:|title:)\s*\(?\s*(err|error|e)\.message/.test(body)) leaks.push(path.basename(f));
+    if (/\{\s*(err|error|e)\.message\s*\}/.test(body)) leaks.push(path.basename(f));
+  }
+  chk(leaks.length === 0, 'N4 no screen renders a raw error message', leaks.join(', ') || 'none');
+  for (const f of ['src/pages/Login.jsx', 'src/pages/Register.jsx', 'src/pages/ResetPassword.jsx',
+                   'src/pages/OAuthConsent.jsx', 'src/pages/ExportData.jsx', 'src/pages/Dashboard.jsx']) {
+    chk(/friendlyError/.test(read(at(f))), `N4 ${path.basename(f)} sanitises error text`);
+  }
+  const fe = read(helper);
+  chk(/401|403/.test(fe) && /5\d\d|>=\s*500/.test(fe), 'N4 helper distinguishes permission from server failures');
+  chk(/console\.error/.test(fe), 'N4 helper still logs the real error for debugging');
+
+  /* N5 — "passed" means the host declined. Never show the bare enum. */
+  const dm = read(at('src/lib/dealMath.js'));
+  chk(/DEAL_STATUS_LABELS/.test(dm), 'N5 deal statuses have host-facing labels');
+  chk(/passed[^\n]*passed on this deal/i.test(dm), 'N5 "passed" is spelled out as declining the deal');
+  chk(/lost[^\n]*landlord/i.test(dm), 'N5 "lost" distinguishes itself from passing');
+  const da = read(at('src/pages/DealAnalyzer.jsx'));
+  chk(!/\{s\}<\/SelectItem>/.test(da), 'N5 status dropdown does not render the bare enum');
+  chk(/dealStatusLabel\(s\)/.test(da), 'N5 status dropdown renders the friendly label');
+  chk(/dealStatusShortLabel\(d\.status\)/.test(da), 'N5 deal list badge renders the friendly label');
+  chk(/dealStatusShortLabel/.test(read(at('src/components/workspace/HostsTab.jsx'))),
+    'N5 staff host view renders the friendly label too');
+  // The stored contract must not have drifted.
+  chk(/"passed"/.test(dm) && /DEAL_STATUSES = \[[^\]]*"passed"/.test(dm),
+    'N5 stored status values are unchanged — labels are display-only');
+
+  /* N6 — No host-facing link may point at a staff-only route. */
+  const hostPages = appFiles.filter((f) => /\/pages\//.test(f) && !/CoachWorkspace/.test(f));
+  const badLinks = [];
+  for (const f of hostPages) {
+    if (/to="\/(coach|admin|workspace)"/.test(read(f))) badLinks.push(path.basename(f));
+  }
+  chk(badLinks.length === 0, 'N6 no host screen links to a staff-only route', badLinks.join(', ') || 'none');
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
