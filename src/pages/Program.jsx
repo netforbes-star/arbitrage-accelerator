@@ -14,6 +14,7 @@ import BuyBoxSection from "@/components/BuyBoxSection";
 import { friendlyError } from "@/lib/friendlyError";
 import { useToast } from "@/components/ui/use-toast";
 import ObjectionSection from "@/components/ObjectionSection";
+import MockPitchDrill from "@/components/MockPitchDrill";
 
 export default function Program() {
 
@@ -211,6 +212,7 @@ export default function Program() {
                       })}
                       {d.day === 1 && <BuyBoxSection />}
                       {d.day === 13 && <ObjectionSection />}
+                      {d.day === 13 && <MockPitchDrill />}
                       {d.day === 28 && (
                         <Link to="/graduation" className="block">
                           <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90 mt-1">

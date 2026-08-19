@@ -3,6 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Save } from "lucide-react";
+import { friendlyError } from "@/lib/friendlyError";
+import { useToast } from "@/components/ui/use-toast";
 
 const OBJECTIONS = [
   { key: "subletting", text: "I don't allow subletting", answer: "This is a corporate lease with a written addendum, not a sublet-and-disappear. I am the tenant of record, I carry the insurance, and the permission is in writing so it survives a change in property management." },
@@ -18,30 +20,46 @@ export default function ObjectionSection() {
   const [responses, setResponses] = useState({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     (async () => {
-      const list = await base44.entities.ObjectionResponse.list("-created_date", 50);
-      const map = {};
-      list.forEach((r) => { map[r.objection_key] = r; });
-      setExisting(map);
-      const filled = {};
-      OBJECTIONS.forEach((o) => { filled[o.key] = map[o.key]?.host_response || ""; });
-      setResponses(filled);
+      try {
+        const list = await base44.entities.ObjectionResponse.list("-created_date", 50);
+        const map = {};
+        list.forEach((r) => { map[r.objection_key] = r; });
+        setExisting(map);
+        const filled = {};
+        OBJECTIONS.forEach((o) => { filled[o.key] = map[o.key]?.host_response || ""; });
+        setResponses(filled);
+      } catch (e) {
+        toast({
+          title: "Couldn't load your answers",
+          description: friendlyError(e, "Refresh the page to try again — anything you've saved is safe.")
+        });
+      }
     })();
   }, []);
 
   const saveAll = async () => {
     setSaving(true);
-    await Promise.all(OBJECTIONS.map((o) => {
-      const payload = { objection_key: o.key, objection_text: o.text, annette_answer: o.answer, host_response: responses[o.key] || "" };
-      const rec = existing[o.key];
-      if (rec) return base44.entities.ObjectionResponse.update(rec.id, payload);
-      return base44.entities.ObjectionResponse.create(payload);
-    }));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      await Promise.all(OBJECTIONS.map((o) => {
+        const payload = { objection_key: o.key, objection_text: o.text, annette_answer: o.answer, host_response: responses[o.key] || "" };
+        const rec = existing[o.key];
+        if (rec) return base44.entities.ObjectionResponse.update(rec.id, payload);
+        return base44.entities.ObjectionResponse.create(payload);
+      }));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      toast({
+        title: "That didn't save",
+        description: friendlyError(e, "We couldn't save your answers. Check your connection and try again.")
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
