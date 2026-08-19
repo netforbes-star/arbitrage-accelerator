@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { analyzeDeal, DEAL_STATUSES } from "@/lib/dealMath";
+import { analyzeDeal, DEAL_STATUSES, dealStatusLabel, dealStatusShortLabel } from "@/lib/dealMath";
 import { computeDeal } from "@/functions/computeDeal";
 import { saveDeal } from "@/functions/saveDeal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -207,7 +207,7 @@ export default function DealAnalyzer() {
             <Field label="Deal status">
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{DEAL_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{DEAL_STATUSES.map((s) => <SelectItem key={s} value={s}>{dealStatusLabel(s)}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
 
@@ -282,7 +282,7 @@ export default function DealAnalyzer() {
                     <span className="font-medium text-brand-text truncate">{d.nickname}</span>
                     <Badge variant="outline" className="text-xs border-brand-line text-brand-text">{d.beds}BR/{d.baths}BA</Badge>
                     <Badge className={d.verdict === "PASS" ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}>{d.verdict}</Badge>
-                    <Badge variant="secondary" className="text-xs bg-brand-raised text-brand-mutedtext">{d.status}</Badge>
+                    <Badge variant="secondary" className="text-xs bg-brand-raised text-brand-mutedtext">{dealStatusShortLabel(d.status)}</Badge>
                   </div>
                   <div className="text-xs text-brand-mutedtext mt-0.5">{d.recommended_strategy} · cash ${d.cash_profit}/mo · true ${d.true_profit}/mo</div>
                 </div>

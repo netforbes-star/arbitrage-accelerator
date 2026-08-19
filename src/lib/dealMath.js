@@ -97,3 +97,33 @@ export function analyzeDeal(input) {
 }
 
 export const DEAL_STATUSES = ["evaluating", "outreach sent", "negotiating", "lease signed", "passed", "lost"];
+
+/**
+ * Host-facing labels for deal status.
+ *
+ * The stored values are the contract with the backend and never change. But
+ * "passed" is genuinely ambiguous on screen: a host looking at a PASS verdict
+ * reads "passed" as "this deal passed underwriting", when it means the opposite
+ * — the host passed ON the deal and declined it. Spell that out.
+ */
+export const DEAL_STATUS_LABELS = {
+  "evaluating": "Evaluating",
+  "outreach sent": "Outreach sent",
+  "negotiating": "Negotiating",
+  "lease signed": "Lease signed",
+  "passed": "I passed on this deal",
+  "lost": "Lost — landlord declined"
+};
+
+/** Short label for badges and dense lists. */
+export const DEAL_STATUS_SHORT_LABELS = {
+  "evaluating": "Evaluating",
+  "outreach sent": "Outreach sent",
+  "negotiating": "Negotiating",
+  "lease signed": "Lease signed",
+  "passed": "I passed",
+  "lost": "Lost"
+};
+
+export const dealStatusLabel = (s) => DEAL_STATUS_LABELS[s] || s;
+export const dealStatusShortLabel = (s) => DEAL_STATUS_SHORT_LABELS[s] || s;
