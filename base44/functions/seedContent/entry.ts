@@ -60,7 +60,8 @@ export default async function (req) {
         { title: "Send 20 outreaches through the one-at-a-time send queue (10 for reduced-capacity hosts)", time_estimate: "90 min", completion_condition: "20 sends logged" }
       ]},
       { week: 2, day: 13, gate: false, title: "Objection-handling drill", why_it_matters: "The landlord says no in five predictable ways. Your answer is already written.", tasks: [
-        { title: "Write your version of each objection response (subletting, trashing, can't pay, never heard, insurance, flat no)", time_estimate: "45 min", completion_condition: "All six responses written" }
+        { title: "Write your version of each objection response (subletting, trashing, can't pay, never heard, insurance, flat no)", time_estimate: "45 min", completion_condition: "All six responses written" },
+        { title: "Run the mock pitch drill out loud — all five rounds, on the clock", time_estimate: "30 min", completion_condition: "All five rounds rehearsed aloud" }
       ]},
       { week: 2, day: 14, gate: false, title: "Week 2 review", why_it_matters: "Funnel math tells you what to fix next week.", tasks: [
         { title: "Log outreach count, responses, conversations booked, list size", time_estimate: "20 min", completion_condition: "Numbers recorded" }
@@ -78,7 +79,8 @@ export default async function (req) {
         { title: "Underwrite deals 4-5; keep daily outreach alive", time_estimate: "90 min", completion_condition: "2 more deals saved" }
       ]},
       { week: 3, day: 19, gate: false, title: "Negotiation prep", why_it_matters: "Your term sheet makes the landlord feel safe saying yes.", tasks: [
-        { title: "Assemble STR permission addendum, 30-day exit, furnished clause, $200 repair threshold, utilities clarity", time_estimate: "60 min", completion_condition: "Term sheet generated" }
+        { title: "Assemble STR permission addendum, 30-day exit, furnished clause, $200 repair threshold, utilities clarity", time_estimate: "60 min", completion_condition: "Term sheet generated" },
+        { title: "Add a written repair-response window (48h urgent / 7d routine) — a slow landlord costs you paying guests", time_estimate: "20 min", completion_condition: "Response window written into the term sheet" }
       ]},
       { week: 3, day: 20, gate: true, title: "Written permission gate", why_it_matters: "Verbal permission isn't permission — a PM change ends it. No artifact, no signed lease.", tasks: [
         { title: "Record permission type (verbal/email/signed) and upload the evidence", time_estimate: "20 min", completion_condition: "Artifact uploaded; verbal flagged as insufficient" }
