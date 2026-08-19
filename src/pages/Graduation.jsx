@@ -40,11 +40,22 @@ export default function Graduation() {
   const signed = data.deals.filter((d) => d.status === "lease signed").length;
   const projected = data.deals.filter((d) => d.verdict === "PASS").reduce((s, d) => s + (d.cash_profit || 0), 0);
 
+  // The sprint's success bar is two outcomes, not one: a signed lease, OR an
+  // active prospect clearly headed toward one. A host sitting in a real
+  // negotiation has met the bar — the screen must say so rather than reporting
+  // "you didn't close."
+  const activeProspects = data.deals.filter((d) => d.status === "negotiating").length;
+  const warmLandlords = data.landlords.filter((l) => ["negotiating", "property viewed"].includes(l.stage)).length;
+  const hasWarmProspect = activeProspects > 0 || warmLandlords > 0;
+  const outcomeMet = signed > 0 || hasWarmProspect;
+
   let diagnosis = "";
   if (signed > 0) {
     diagnosis = `You signed ${signed} deal${signed > 1 ? "s" : ""} — that's the whole game. Now protect it: get written STR permission on file, separate the bank account, and run your turnover SOP like clockwork.`;
+  } else if (hasWarmProspect) {
+    diagnosis = `You didn't sign inside the four weeks — but you finished with ${activeProspects > 0 ? `${activeProspects} deal${activeProspects > 1 ? "s" : ""} in negotiation` : `${warmLandlords} landlord${warmLandlords > 1 ? "s" : ""} at the table`}, and that is the outcome this sprint is built to produce. A live negotiation is not a near-miss; it is the door opening. Finish it: term sheet (Day 19), written permission (Day 20), signature (Day 22). Most arbitrage leases close in the two weeks after the pitch, not during it.`;
   } else if (conversations >= 3) {
-    diagnosis = `You held ${conversations} conversations but didn't close. Your funnel is working at the top. Push the negotiation step: assemble the term sheet (Day 19) and the written permission addendum (Day 20). The deals are there — they need closing language.`;
+    diagnosis = `You held ${conversations} conversations but none moved to the table. Your funnel is working at the top. Push the negotiation step: assemble the term sheet (Day 19) and the written permission addendum (Day 20). The deals are there — they need closing language.`;
   } else if (contacted >= 20) {
     diagnosis = `You sent ${contacted} outreaches but only ${conversations} turned into conversations. The volume is right; the conversion needs work. Revisit the value prop (Day 8) and the objection library (Day 13), and switch more touches to phone — automation warms, the call closes.`;
   } else {
@@ -59,11 +70,33 @@ export default function Graduation() {
         <p className="text-brand-mutedtext text-sm">Your 28-day results, and a diagnosis from your own funnel data.</p>
       </div>
 
+      <Card className={outcomeMet ? "border-brand-gold/50 bg-brand-gold/10" : "border-brand-line"}>
+        <CardContent className="py-5">
+          <div className="text-xs uppercase tracking-wide text-brand-gold font-semibold mb-1">Sprint outcome</div>
+          {signed > 0 ? (
+            <p className="text-sm text-brand-text">
+              <strong>Signed lease.</strong> You cleared the bar this sprint was built for.
+            </p>
+          ) : hasWarmProspect ? (
+            <p className="text-sm text-brand-text">
+              <strong>Active prospect headed toward a lease.</strong> You cleared the bar. A signature that lands in
+              week five still belongs to this sprint — keep the momentum and close it.
+            </p>
+          ) : (
+            <p className="text-sm text-brand-text">
+              <strong>No signed lease or live negotiation yet.</strong> That's what the follow-up is for. Your numbers
+              below say exactly which step to repeat — the system doesn't expire when the four weeks do.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-2 gap-3">
         <Result icon={Users} value={contacted} label="Landlords contacted" goal="100" />
         <Result icon={MessageSquare} value={conversations} label="Conversations held" goal="10-15" />
         <Result icon={Calculator} value={data.deals.length} label="Deals underwritten" goal="8-10" />
         <Result icon={Handshake} value={signed} label="Deals signed" goal="1+" />
+        <Result icon={TrendingUp} value={activeProspects + warmLandlords} label="Live prospects at the table" goal="1+" />
       </div>
 
       <Card className="border-brand-gold/40 bg-brand-gold/10">
@@ -76,7 +109,7 @@ export default function Graduation() {
         <CardContent><p className="text-sm text-brand-mutedtext leading-relaxed">{diagnosis}</p></CardContent>
       </Card>
 
-      {signed === 0 && (
+      {signed === 0 && !hasWarmProspect && (
         <div className="text-center text-sm text-brand-mutedtext bg-brand-raised rounded-lg p-4 border border-brand-line">
           A deal you didn't sign isn't a failure — it's data. The number that has to change is right above. Adjust and run the sprint again.
         </div>
