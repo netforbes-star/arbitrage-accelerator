@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { dayDate, WEEK_THEMES, WEEK_BLURBS } from "@/lib/curriculum";
-import { CheckCircle2, Circle, Lock, SkipForward, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Circle, Lock, SkipForward, ShieldCheck, Trophy } from "lucide-react";
 import BuyBoxSection from "@/components/BuyBoxSection";
 import { friendlyError } from "@/lib/friendlyError";
 import { useToast } from "@/components/ui/use-toast";
@@ -210,6 +211,13 @@ export default function Program() {
                       })}
                       {d.day === 1 && <BuyBoxSection />}
                       {d.day === 13 && <ObjectionSection />}
+                      {d.day === 28 && (
+                        <Link to="/graduation" className="block">
+                          <Button className="w-full bg-brand-gold text-brand-ink hover:bg-brand-gold/90 mt-1">
+                            <Trophy className="w-4 h-4 mr-2" /> Open my results & diagnosis
+                          </Button>
+                        </Link>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
