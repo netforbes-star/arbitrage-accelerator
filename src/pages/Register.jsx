@@ -10,6 +10,7 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { friendlyError } from "@/lib/friendlyError";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -32,7 +33,7 @@ export default function Register() {
       await base44.auth.register({ email, password });
       setShowOtp(true);
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(friendlyError(err, "We couldn't create your account. Try again."));
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ export default function Register() {
       }
       window.location.href = safeReturnTo();
     } catch (err) {
-      setError(err.message || "Invalid verification code");
+      setError(friendlyError(err, "That code didn't work. Check it and try again."));
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ export default function Register() {
         description: "Check your email for the new code.",
       });
     } catch (err) {
-      setError(err.message || "Failed to resend code");
+      setError(friendlyError(err, "We couldn't resend the code. Try again in a moment."));
     }
   };
 

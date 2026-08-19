@@ -3,6 +3,7 @@ import { appParams } from "@/lib/app-params";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { friendlyError } from "@/lib/friendlyError";
 
 // App-side OAuth consent page for the app's MCP server. The platform redirects
 // AI clients here (see base44/mcp/config.json `consent_path`) with an opaque
@@ -129,7 +130,7 @@ export default function OAuthConsent() {
         setSubmitting(false);
       }
     } catch (e) {
-      setError(e.message);
+      setError(friendlyError(e, "We couldn't complete that authorization. Try again."));
       setSubmitting(false);
     }
   };

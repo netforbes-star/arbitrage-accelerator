@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileDown, Loader2 } from "lucide-react";
+import { friendlyError } from "@/lib/friendlyError";
 
 export default function ExportData() {
   const { toast } = useToast();
@@ -37,7 +38,7 @@ export default function ExportData() {
       await logAudit("data_export", `${def.label} (${count} records)`);
       toast({ title: "Export ready", description: `${count} record${count === 1 ? "" : "s"} exported.` });
     } catch (e) {
-      toast({ title: "Export failed", description: e.message || "Please try again." });
+      toast({ title: "Export failed", description: friendlyError(e, "We couldn't build your download. Try again in a moment.") });
     } finally {
       setBusy(null);
     }
@@ -50,7 +51,7 @@ export default function ExportData() {
       await logAudit("data_export", `all datasets (${total} records)`);
       toast({ title: "Export ready", description: `${total} record${total === 1 ? "" : "s"} exported across all datasets.` });
     } catch (e) {
-      toast({ title: "Export failed", description: e.message || "Please try again." });
+      toast({ title: "Export failed", description: friendlyError(e, "We couldn't build your download. Try again in a moment.") });
     } finally {
       setBusy(null);
     }
