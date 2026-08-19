@@ -1,21 +1,38 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { friendlyError } from "@/lib/friendlyError";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, MessageSquare, Calculator, Handshake, TrendingUp } from "lucide-react";
 
 export default function Graduation() {
   const [data, setData] = useState(null);
+  const [error, setError] = useState("");
   useEffect(() => {
     (async () => {
-      const [deals, landlords, logs] = await Promise.all([
-        base44.entities.Deal.list("-created_date", 100),
-        base44.entities.Landlord.list("-created_date", 200),
-        base44.entities.OutreachLog.list("-created_date", 200)
-      ]);
-      setData({ deals, landlords, logs });
+      try {
+        const [deals, landlords, logs] = await Promise.all([
+          base44.entities.Deal.list("-created_date", 100),
+          base44.entities.Landlord.list("-created_date", 200),
+          base44.entities.OutreachLog.list("-created_date", 200)
+        ]);
+        setData({ deals, landlords, logs });
+      } catch (e) {
+        setError(friendlyError(e, "We couldn't load your results. Refresh the page to try again."));
+      }
     })();
   }, []);
+
+  if (error) {
+    return (
+      <div className="max-w-md mx-auto py-16 space-y-4 text-center">
+        <div className="p-4 rounded-lg border border-red-500/40 bg-red-500/10 text-sm text-red-300">{error}</div>
+        <Link to="/"><Button variant="outline" className="border-brand-line text-brand-text">Back to dashboard</Button></Link>
+      </div>
+    );
+  }
+
   if (!data) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-brand-line border-t-brand-gold rounded-full animate-spin" /></div>;
 
   const contacted = data.landlords.filter((l) => l.stage !== "not contacted").length;
@@ -64,7 +81,10 @@ export default function Graduation() {
           A deal you didn't sign isn't a failure — it's data. The number that has to change is right above. Adjust and run the sprint again.
         </div>
       )}
-      <Button variant="outline" className="w-full border-brand-line text-brand-text" onClick={() => window.history.back()}>Back to dashboard</Button>
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/program"><Button variant="outline" className="w-full border-brand-line text-brand-text">Back to program</Button></Link>
+        <Link to="/"><Button variant="outline" className="w-full border-brand-line text-brand-text">Dashboard</Button></Link>
+      </div>
     </div>
   );
 }
