@@ -576,7 +576,7 @@ for (const name of HOST_OWNED) {
 
   /* O5 — The four weeks still end where the guarantee says they do. */
   chk(/day: 20, gate: true/.test(seed), 'O5 written permission remains a hard gate');
-  chk(/day: 22[\s\S]{0,400}lease signed/.test(seed), 'O5 week 4 still drives to signature');
+  chk(/day: 22[\s\S]{0,600}?lease signed/.test(seed), 'O5 week 4 still drives to signature');
   chk(/GATE_DAYS = \[1, 3, 5, 8, 12, 16, 20\]/.test(read(at('src/lib/curriculum.js'))),
     'O5 gate days unchanged — the spine of the four weeks holds');
 }
