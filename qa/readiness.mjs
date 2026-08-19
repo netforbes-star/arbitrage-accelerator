@@ -527,8 +527,14 @@ for (const name of HOST_OWNED) {
   const dash = read(at('src/pages/Dashboard.jsx'));
 
   /* O1 — A warm prospect is a met outcome, not a near-miss. */
-  chk(/hasWarmProspect/.test(grad), 'O1 Graduation recognises an active prospect as an outcome');
-  chk(/activeProspects/.test(grad) && /negotiating/.test(grad), 'O1 active negotiations counted toward the outcome');
+  chk(/hasWarmProspect\s*=\s*activeProspects\s*>\s*0\s*\|\|\s*warmLandlords\s*>\s*0/.test(grad),
+    'O1 Graduation recognises an active prospect as an outcome');
+  chk(/activeProspects\s*=\s*data\.deals\.filter[^\n]*negotiating/.test(grad),
+    'O1 active negotiations are counted from real deal data');
+  chk(/warmLandlords\s*=\s*data\.landlords\.filter[^\n]*(negotiating|property viewed)/.test(grad),
+    'O1 landlords at the table are counted from real pipeline data');
+  chk(/outcomeMet\s*=\s*signed\s*>\s*0\s*\|\|\s*hasWarmProspect/.test(grad),
+    'O1 the outcome bar is signed OR warm prospect — both satisfy it');
   chk(/outcomeMet/.test(grad), 'O1 the sprint outcome is stated explicitly on the results screen');
   chk(/Sprint outcome/i.test(grad), 'O1 results screen names the outcome bar for the host');
   chk(!/didn't close[\s\S]{0,200}hasWarmProspect/.test(grad),
@@ -541,7 +547,8 @@ for (const name of HOST_OWNED) {
   const drillPath = at('src/components/MockPitchDrill.jsx');
   chk(fs.existsSync(drillPath), 'O2 a mock pitch drill exists');
   const drill = read(drillPath);
-  chk(/MockPitchDrill/.test(prog), 'O2 the drill is reachable inside the program');
+  chk(/d\.day === 13 && <MockPitchDrill/.test(prog), 'O2 the drill renders on Day 13 in the program');
+  chk(/import MockPitchDrill/.test(prog), 'O2 the drill is imported, not just referenced');
   for (const round of ['cold open', 'subletting', 'trash', 'repair', 'flat no']) {
     chk(new RegExp(round, 'i').test(drill), `O2 drill covers: ${round}`);
   }
@@ -557,7 +564,8 @@ for (const name of HOST_OWNED) {
   const callPath = at('src/components/WeeklyCallCard.jsx');
   chk(fs.existsSync(callPath), 'O3 the weekly coaching call has a home in the app');
   const call = read(callPath);
-  chk(/WeeklyCallCard/.test(dash), 'O3 call prep surfaces on the Dashboard');
+  chk(/<WeeklyCallCard\s+week=/.test(dash), 'O3 call prep actually renders on the Dashboard');
+  chk(/import WeeklyCallCard/.test(dash), 'O3 the call card is imported, not just referenced');
   for (const wk of ['1', '2', '3', '4']) chk(new RegExp(`\\s${wk}:\\s*\\{`).test(call), `O3 week ${wk} has its own agenda`);
   chk(/We decide|decide:/.test(call), 'O3 each call drives to a decision, not a status update');
   chk(/bookingUrl/.test(call), 'O3 booking link is supported');
