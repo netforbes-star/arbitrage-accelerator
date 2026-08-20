@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Calculator, CheckCircle2, XCircle, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import DealSummaryChart from "@/components/deals/DealSummaryChart";
 
 const EMPTY = {
   nickname: "", beds: 2, baths: 1, monthly_rent: "", utilities: "", furnishing_cost: "",
@@ -269,6 +270,8 @@ export default function DealAnalyzer() {
           </CardContent>
         </Card>
       </div>
+
+      <DealSummaryChart deals={deals} />
 
       <div className="space-y-3">
         <h2 className="text-lg font-semibold text-brand-text">Saved deals ({deals.length})</h2>
