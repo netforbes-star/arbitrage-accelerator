@@ -83,10 +83,10 @@ export default function WeeklyCallCard({ week, bookingUrl }) {
         </div>
 
         {bookingUrl ? (
-          <a href={bookingUrl} target="_blank" rel="noopener noreferrer"
+          <ExternalLink href={bookingUrl} showIcon={false}
              className="inline-flex items-center gap-1 text-xs font-medium text-brand-gold hover:underline">
             Book this week's call <ArrowRight className="w-3 h-3" />
-          </a>
+          </ExternalLink>
         ) : (
           <p className="text-xs text-brand-mutedtext italic">
             Your coach will send the booking link for this week's call.
