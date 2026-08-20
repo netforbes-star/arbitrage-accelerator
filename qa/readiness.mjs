@@ -627,6 +627,26 @@ for (const name of HOST_OWNED) {
     'N click overlay is bounded to its own card');
 }
 
+/* ── O. TEMPLATE VAULT RENDERING ─────────────────────────────────────── */
+{
+  const v = read(at('src/pages/TemplateVault.jsx'));
+  // Long checklists are the main thing the vault holds. Unstyled list and
+  // rule elements fall back to browser defaults, which read badly on dark.
+  for (const el of ['ul:', 'ol:', 'hr:', 'em:', 'blockquote:', 'code:'])
+    chk(new RegExp(`\\n\\s*${el}`).test(v), `O markdown <${el.replace(':','')}> is styled for the dark theme`);
+  chk(/marker:text-brand-gold/.test(v), 'O list markers use the brand accent');
+  chk(/ExternalLink/.test(v), 'O markdown links route through the sandbox-safe opener');
+  chk(!/<a\b[^>]*target="_blank"/.test(v), 'O vault contains no raw external anchor');
+
+  // The Template entity must be able to hold a real checklist.
+  const t = entity('Template');
+  chk(t.properties.content.maxLength >= 12000,
+    'O Template.content can hold a long-form checklist', `max=${t.properties.content.maxLength}`);
+  chk(t.properties.content.maxLength <= 50000, 'O Template.content is still bounded');
+  chk(JSON.stringify(t.rls.create).includes('admin'), 'O Template writes still admin-only');
+  chk(JSON.stringify(t.rls.read) === '{}', 'O Templates still readable by every host');
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
