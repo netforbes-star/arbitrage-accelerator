@@ -4,6 +4,7 @@ import { useHostProfile } from "@/lib/useHostProfile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
+import ExternalLink from "@/components/ExternalLink";
 import { FileText, Search } from "lucide-react";
 
 const mdComponents = {
@@ -27,8 +28,10 @@ const mdComponents = {
   code: ({ children }) => (
     <code className="font-mono text-xs bg-brand-raised border border-brand-line rounded px-1.5 py-0.5 text-brand-text">{children}</code>
   ),
+  // Must route through ExternalLink: a raw target="_blank" is silently
+  // swallowed inside the sandboxed preview frame.
   a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-brand-gold hover:underline">{children}</a>
+    <ExternalLink href={href} showIcon={false} className="text-brand-gold hover:underline">{children}</ExternalLink>
   )
 };
 
