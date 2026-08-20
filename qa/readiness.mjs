@@ -395,7 +395,10 @@ for (const name of HOST_OWNED) {
   const mgr  = read(at('src/components/resources/ResourceManager.jsx'));
   const both = page + list + mgr;
 
-  chk(/target="_blank"/.test(list), 'M external links open in a new tab');
+  // Superseded by section N. Markup alone was never sufficient: a raw
+  // target="_blank" is silently dropped in a sandboxed frame. The behaviour
+  // is now asserted there; here we only confirm the shared component is used.
+  chk(/ExternalLink/.test(list), 'M external links go through the shared opener');
   chk(/rel="noopener noreferrer"/.test(list), 'M external links carry noopener noreferrer');
   chk(/ExternalLink|external/i.test(list), 'M external links are visually marked as leaving the app');
   chk(/hostname|new URL|domain/i.test(list), 'M destination domain shown so nobody clicks blind');
