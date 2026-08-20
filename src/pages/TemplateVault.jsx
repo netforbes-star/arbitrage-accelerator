@@ -12,7 +12,24 @@ const mdComponents = {
   h3: ({ children }) => <h3 className="text-sm font-semibold text-brand-text mt-3 mb-1">{children}</h3>,
   p: ({ children }) => <p className="text-sm text-brand-mutedtext leading-relaxed mb-2">{children}</p>,
   li: ({ children }) => <li className="text-sm text-brand-mutedtext leading-relaxed">{children}</li>,
-  strong: ({ children }) => <strong className="text-brand-text font-semibold">{children}</strong>
+  strong: ({ children }) => <strong className="text-brand-text font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="text-brand-text/90 italic">{children}</em>,
+  // Lists and rules were unstyled, so long templates rendered with browser
+  // defaults: bullets clipped at the container edge and a near-invisible <hr>
+  // on the dark ground. Checklists are the main thing this vault holds, so
+  // they need to render properly.
+  ul: ({ children }) => <ul className="list-disc pl-5 space-y-1.5 mb-3 marker:text-brand-gold/70">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1.5 mb-3 marker:text-brand-gold/70">{children}</ol>,
+  hr: () => <hr className="border-0 border-t border-brand-line my-5" />,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-2 border-brand-gold pl-4 my-3 text-sm text-brand-mutedtext">{children}</blockquote>
+  ),
+  code: ({ children }) => (
+    <code className="font-mono text-xs bg-brand-raised border border-brand-line rounded px-1.5 py-0.5 text-brand-text">{children}</code>
+  ),
+  a: ({ href, children }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-brand-gold hover:underline">{children}</a>
+  )
 };
 
 export default function TemplateVault() {
