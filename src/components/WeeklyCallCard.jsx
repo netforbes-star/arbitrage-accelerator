@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Video, ArrowRight } from "lucide-react";
+import ExternalLink from "@/components/ExternalLink";
 
 /**
  * Weekly coaching call prep.
