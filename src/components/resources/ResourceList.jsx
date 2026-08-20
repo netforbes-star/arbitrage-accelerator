@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { ExternalLink } from "lucide-react";
+import ExternalLink from "@/components/ExternalLink";
 
 const CATEGORIES = [
   "Getting Started",
@@ -40,19 +40,23 @@ export default function ResourceList({ resources }) {
       {grouped.map(({ cat, items }) => (
         <section key={cat}>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-brand-gold mb-3">{cat}</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-2 gap-3 [&>*]:relative">
             {items.map((r) => (
-              <Card key={r.id} className="border-brand-line">
+              <Card
+                key={r.id}
+                className="border-brand-line transition-colors hover:border-brand-gold/60 hover:bg-brand-raised/40"
+              >
                 <CardContent className="py-4 space-y-1.5">
-                  <a
+                  <ExternalLink
                     href={r.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-text font-medium hover:text-brand-gold inline-flex items-center gap-1.5"
+                    className="text-brand-text font-medium hover:text-brand-gold"
                   >
-                    {r.title}
-                    <ExternalLink className="w-3.5 h-3.5 text-brand-mutedtext" />
-                  </a>
+                    {/* Stretched: makes the whole card the click target, not just
+                        the title text. The card is position-relative via the
+                        wrapper below so the overlay is bounded to this card. */}
+                    <span className="absolute inset-0 rounded-xl" aria-hidden="true" />
+                    <span className="relative">{r.title}</span>
+                  </ExternalLink>
                   <div className="text-xs text-brand-mutedtext">{domainOf(r.url)}</div>
                   {(r.source || r.author) && (
                     <div className="text-xs text-brand-mutedtext">{[r.source, r.author].filter(Boolean).join(" · ")}</div>
