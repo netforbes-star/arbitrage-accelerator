@@ -589,6 +589,41 @@ for (const name of HOST_OWNED) {
     'O5 gate days unchanged — the spine of the four weeks holds');
 }
 
+/* ── N. EXTERNAL LINKS ACTUALLY OPEN ─────────────────────────────────── */
+{
+  // A plain <a target="_blank"> is silently swallowed inside a sandboxed
+  // iframe that omits allow-popups — which is how the Base44 preview renders
+  // the app. Correct markup is NOT sufficient; the click must be intercepted.
+  const shared = read(at('src/components/ExternalLink.jsx'));
+  chk(/window\.open\(/.test(shared), 'N shared link component opens the window itself');
+  chk(/if\s*\(win\)/.test(shared) || /win\s*\?/.test(shared),
+    'N detects a blocked pop-up via the window.open return value');
+  chk(/window\.top/.test(shared), 'N falls back to navigating the top frame');
+  chk(/clipboard\.writeText/.test(shared), 'N offers copy-link when every path is blocked');
+  chk(/metaKey|ctrlKey/.test(shared), 'N leaves modified clicks (new tab) to the browser');
+  chk(/rel="noopener noreferrer"/.test(shared), 'N keeps noopener on the anchor');
+
+  // No app screen may hand-roll an external anchor and reintroduce the bug.
+  const offenders = [];
+  for (const f of appFiles) {
+    if (f.endsWith('ExternalLink.jsx')) continue;
+    const c = read(f);
+    // Router <Link target="_blank"> is internal navigation — exempt.
+    const raw = c.match(/<a\b[^>]*target="_blank"[^>]*>/g) || [];
+    if (raw.length) offenders.push(`${f.replace(ROOT + '/src/', '')}(${raw.length})`);
+  }
+  chk(offenders.length === 0,
+    'N no raw external anchors left — all route through ExternalLink', offenders.join(', '));
+
+  // The resource card, not just the title, is the click target.
+  const list = read(at('src/components/resources/ResourceList.jsx'));
+  chk(/ExternalLink/.test(list) && !/from "lucide-react"[\s\S]{0,40}ExternalLink/.test(list),
+    'N resource list uses the shared component');
+  chk(/absolute inset-0/.test(list), 'N whole resource card is clickable');
+  chk(/\[&>\*\]:relative|className="[^"]*relative/.test(list),
+    'N click overlay is bounded to its own card');
+}
+
 /* ── REPORT ───────────────────────────────────────────────────────────── */
 const line = '─'.repeat(64);
 console.log('\n' + line);
