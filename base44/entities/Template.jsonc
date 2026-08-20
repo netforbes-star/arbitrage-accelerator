@@ -12,8 +12,8 @@
     },
     "content": {
       "type": "string",
-      "maxLength": 8000,
-      "description": "Markdown content with {{variables}}"
+      "maxLength": 25000,
+      "description": "Markdown. 25000 holds a long-form checklist; still bounded to prevent runaway payloads."
     },
     "variables": {
       "type": "string",
