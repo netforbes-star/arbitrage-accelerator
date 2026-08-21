@@ -596,6 +596,43 @@ for (const name of HOST_OWNED) {
   chk(/day: 22[\s\S]{0,600}?lease signed/.test(seed), 'O5 week 4 still drives to signature');
   chk(/GATE_DAYS = \[1, 3, 5, 8, 12, 16, 20\]/.test(read(at('src/lib/curriculum.js'))),
     'O5 gate days unchanged — the spine of the four weeks holds');
+
+  /* O6 — Landlord outreach scripts are host-agnostic and actually render.
+     These templates get copied verbatim by every host in the cohort. A real
+     phone number or a coach's own company name left in one reaches every
+     landlord they contact, so absence is asserted, not assumed. */
+  chk(/title: "Landlord Outreach Email Scripts"/.test(seed),
+    'O6 the landlord outreach scripts ship in the seed content');
+  chk(/Track A/.test(seed) && /Track B/.test(seed),
+    'O6 private landlord and management company are separate tracks');
+  chk(/Two words to avoid/.test(seed),
+    'O6 scripts carry the trigger-word warning the drill also teaches');
+  // A US phone number in any shape. The 555 examples in the placeholder key
+  // are deliberate and excluded; anything else is a real number that leaked.
+  const seedTemplates = seed.slice(seed.indexOf('const templates = ['));
+  const phones = (seedTemplates.match(/\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}/g) || [])
+    .filter((n) => !/555/.test(n));
+  chk(phones.length === 0, `O6 no real phone number in any template (found: ${phones.join(', ') || 'none'})`);
+  chk(!/Magnolia|Annette/i.test(seedTemplates),
+    'O6 no coach-specific name or company inside a host-facing template');
+  // Placeholders are the whole point — a rewrite that drops them silently
+  // hands hosts a script that reads as someone else's business.
+  const brackets = new Set(seedTemplates.match(/\[[A-Z][A-Z0-9 #\-\/]*\]/g) || []);
+  chk(brackets.size >= 15, `O6 scripts carry a real placeholder set (${brackets.size} distinct)`);
+
+  /* O7 — The vault renders what the templates actually contain.
+     react-markdown here runs without remark-gfm, so a table renders as literal
+     pipes and a GFM task list as literal "[ ]". Both have to stay out. */
+  chk(!/^\s*\|.*\|/m.test(seedTemplates),
+    'O7 no markdown table in a template — the vault cannot render one');
+  chk(!/- \[ \]/.test(seedTemplates),
+    'O7 checkboxes use ☐, not GFM task syntax the vault renders literally');
+  chk(/pre: \(\{ children \}\)/.test(vault),
+    'O7 fenced email bodies get a styled block, not browser defaults');
+  chk(/whitespace-pre-wrap/.test(vault),
+    'O7 a 70-column email wraps instead of running off a phone screen');
+  chk(/text\.includes\("\\n"\)/.test(vault),
+    'O7 inline code and fenced blocks are styled apart, not identically');
 }
 
 /* ── N. EXTERNAL LINKS ACTUALLY OPEN ─────────────────────────────────── */
