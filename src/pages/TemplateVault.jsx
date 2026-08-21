@@ -28,6 +28,12 @@ const mdComponents = {
   code: ({ children }) => (
     <code className="font-mono text-xs bg-brand-raised border border-brand-line rounded px-1.5 py-0.5 text-brand-text">{children}</code>
   ),
+  // Fenced blocks hold copy-and-send email bodies. Without a styled `pre` they
+  // fell back to browser defaults: no wrapping, so a 70-column email ran off
+  // the right edge on a phone, and no ground of its own on the dark theme.
+  pre: ({ children }) => (
+    <pre className="font-mono text-xs bg-brand-raised border border-brand-line rounded-lg p-4 my-3 overflow-x-auto whitespace-pre-wrap break-words text-brand-text">{children}</pre>
+  ),
   // Must route through ExternalLink: a raw target="_blank" is silently
   // swallowed inside the sandboxed preview frame.
   a: ({ href, children }) => (
