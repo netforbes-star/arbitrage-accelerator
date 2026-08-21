@@ -25,9 +25,20 @@ const mdComponents = {
   blockquote: ({ children }) => (
     <blockquote className="border-l-2 border-brand-gold pl-4 my-3 text-sm text-brand-mutedtext">{children}</blockquote>
   ),
-  code: ({ children }) => (
-    <code className="font-mono text-xs bg-brand-raised border border-brand-line rounded px-1.5 py-0.5 text-brand-text">{children}</code>
-  ),
+  // react-markdown v9 dropped the `inline` prop, so inline code and a fenced
+  // block arrive through the same component. A fenced block always carries a
+  // newline and inline code never does — that separates them reliably. Without
+  // the split, the inline chrome (border, padding, own background) was drawn
+  // around every email body nested inside its <pre>.
+  code: ({ children }) => {
+    const text = Array.isArray(children) ? children.join("") : String(children ?? "");
+    if (text.includes("\n")) {
+      return <code className="font-mono text-xs text-brand-text">{children}</code>;
+    }
+    return (
+      <code className="font-mono text-xs bg-brand-raised border border-brand-line rounded px-1.5 py-0.5 text-brand-text">{children}</code>
+    );
+  },
   // Fenced blocks hold copy-and-send email bodies. Without a styled `pre` they
   // fell back to browser defaults: no wrapping, so a 70-column email ran off
   // the right edge on a phone, and no ground of its own on the dark theme.
