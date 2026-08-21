@@ -13,6 +13,7 @@ import { logAudit } from "@/lib/audit";
 import { useToast } from "@/components/ui/use-toast";
 import { friendlyError } from "@/lib/friendlyError";
 import WeeklyCallCard from "@/components/WeeklyCallCard";
+import ProfitPotentialChart from "@/components/deals/ProfitPotentialChart";
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
@@ -169,6 +170,8 @@ export default function Dashboard() {
           {exporting ? "Preparing…" : "Download my data"}
         </Button>
       </div>
+
+      <ProfitPotentialChart deals={deals} />
 
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-brand-line">
