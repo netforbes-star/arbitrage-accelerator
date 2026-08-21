@@ -571,10 +571,16 @@ for (const name of HOST_OWNED) {
   chk(/import WeeklyCallCard/.test(dash), 'O3 the call card is imported, not just referenced');
   for (const wk of ['1', '2', '3', '4']) chk(new RegExp(`\\s${wk}:\\s*\\{`).test(call), `O3 week ${wk} has its own agenda`);
   chk(/We decide|decide:/.test(call), 'O3 each call drives to a decision, not a status update');
-  chk(/bookingUrl/.test(call), 'O3 booking link is supported');
-  chk(/coach will send/i.test(call), 'O3 missing booking link degrades gracefully');
+  // Booking links are sent by the coach directly, by decision. The app holds
+  // no link and no config for one — asserting their absence keeps a future
+  // change from quietly reintroducing a setting nobody maintains.
+  chk(!/bookingUrl/.test(call), 'O3 card holds no booking link');
+  chk(!/coach will send the booking link/i.test(call),
+    'O3 copy reads as deliberate, not as a missing link');
+  chk(/sends the booking link/i.test(call), 'O3 host is told how the link actually arrives');
   const cfg = read(at('src/lib/programConfig.js'));
-  chk(/CALL_BOOKING_URL/.test(cfg), 'O3 booking link is configurable in one place');
+  chk(!/CALL_BOOKING_URL/.test(cfg), 'O3 no unused booking-link setting left in config');
+  chk(!/CALL_BOOKING_URL/.test(dash), 'O3 Dashboard no longer imports the removed setting');
 
   /* O4 — Lease protection the sprint sold is actually in the curriculum. */
   const seed = read(at('base44/functions/seedContent/entry.ts'));
