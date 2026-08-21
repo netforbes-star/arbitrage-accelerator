@@ -11,6 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 import { analyzeDeal, DEFAULTS } from '../src/lib/dealMath.js';
+import { findPersonalInfo } from '../src/lib/personalInfo.js';
 
 const R = { pass: [], fail: [], warn: [] };
 const ok = (n, d = '') => R.pass.push([n, d]);
@@ -689,6 +690,69 @@ for (const name of HOST_OWNED) {
   chk(t.properties.content.maxLength <= 50000, 'O Template.content is still bounded');
   chk(JSON.stringify(t.rls.create).includes('admin'), 'O Template writes still admin-only');
   chk(JSON.stringify(t.rls.read) === '{}', 'O Templates still readable by every host');
+}
+
+/* ── P. NO PERSONAL INFORMATION IN HOST-FACING CONTENT ─────────────────
+   Templates and curriculum are copied verbatim by every host in the cohort
+   and sent to landlords, leasing offices and property managers. A real phone
+   number left in one does not stay inside the app — it reaches every landlord
+   every host contacts, and the replies come back to the coach.
+
+   The detector is shared with the Coach Workspace editor (src/lib/personalInfo.js)
+   so a rule can never be tightened in one place and forgotten in the other. */
+{
+  const seedSrc = read(at('base44/functions/seedContent/entry.ts'));
+  const grab = (name) => {
+    const i = seedSrc.indexOf(`const ${name} = [`);
+    const j = seedSrc.indexOf('\n    ];', i);
+    // eslint-disable-next-line no-eval
+    return eval(seedSrc.slice(i + `const ${name} = `.length, j + 7).replace(/;\s*$/, ''));
+  };
+
+  const templates = grab('templates');
+  const curriculum = grab('curriculum');
+  chk(templates.length > 0, 'P seed content exposes a readable template set', `${templates.length} templates`);
+  chk(curriculum.length > 0, 'P seed content exposes a readable curriculum', `${curriculum.length} days`);
+
+  let leaks = 0;
+  for (const t of templates) {
+    const found = findPersonalInfo(`${t.title}\n${t.content}`);
+    chk(found.length === 0,
+      `P template is host-safe: ${t.title}`,
+      found.map((f) => `${f.kind}: ${f.match}`).join('; '));
+    leaks += found.length;
+  }
+  for (const d of curriculum) {
+    const found = findPersonalInfo(JSON.stringify(d));
+    if (found.length) {
+      bad(`P curriculum day ${d.day} carries personal information`,
+        found.map((f) => `${f.kind}: ${f.match}`).join('; '));
+      leaks += found.length;
+    }
+  }
+  chk(leaks === 0, 'P no personal information anywhere in seeded host content');
+
+  // The detector itself must keep working. If a future edit loosens a rule,
+  // these canaries fail before any real content gets a chance to slip through.
+  chk(findPersonalInfo('reach me at 904-830-4424').length > 0, 'P detector catches a bare phone number');
+  chk(findPersonalInfo('call (904) 830-4424 today').length > 0, 'P detector catches a formatted phone number');
+  chk(findPersonalInfo('email netforbes@magaccommodations.net').length > 0, 'P detector catches a personal email');
+  chk(findPersonalInfo('I run Magnolia Accommodations').length > 0, 'P detector catches the operating company');
+  chk(findPersonalInfo('Annette will call you').length > 0, 'P detector catches the coach name');
+  chk(findPersonalInfo('our Brown Pelican unit').length > 0, 'P detector catches a portfolio property');
+  // …and must not cry wolf, or the Coach Workspace warning gets ignored.
+  chk(findPersonalInfo('call me at (555) 555-5555').length === 0, 'P detector allows a 555 example number');
+  chk(findPersonalInfo('reach me at [YOUR PHONE]').length === 0, 'P detector allows a bracketed placeholder');
+  chk(findPersonalInfo('- ☐ Thermostat 68F\n- 30 days notice').length === 0, 'P detector does not fire on ordinary template copy');
+
+  // The editor guard is the only thing standing between a hand-edit and every
+  // host in the cohort. Assert it is wired, not just present in the file.
+  const tab = read(at('src/components/workspace/TemplatesTab.jsx'));
+  chk(/findPersonalInfo/.test(tab), 'P Coach Workspace screens template edits');
+  chk(/disabled=\{saving \|\| leaks\.length > 0\}/.test(tab), 'P save is blocked while personal info remains');
+  chk(/if \(leaks\.length > 0\)/.test(tab), 'P save refuses even if the button is bypassed');
+  chk(/Personal information in a host-facing template/.test(tab), 'P the warning names the actual risk');
+  chk(/\[YOUR PHONE\]/.test(tab), 'P the warning shows what to write instead');
 }
 
 /* ── REPORT ───────────────────────────────────────────────────────────── */
