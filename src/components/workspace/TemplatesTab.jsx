@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "./WorkspaceShared";
+import { findPersonalInfo } from "@/lib/personalInfo";
+import { AlertTriangle } from "lucide-react";
 
 export default function TemplatesTab() {
   const [templates, setTemplates] = useState([]);
@@ -30,8 +32,18 @@ export default function TemplatesTab() {
   };
   useEffect(() => { load(); }, []);
 
+  // Templates are copied verbatim by every host and sent to strangers. A real
+  // phone number or company name saved here would reach every landlord in the
+  // cohort, and the replies would come back here instead of to the host. The
+  // check runs as you type so the warning arrives before the save, not after.
+  const leaks = edit ? findPersonalInfo(`${edit.title}\n${edit.content}`) : [];
+
   const save = async () => {
     setError("");
+    if (leaks.length > 0) {
+      setError("This template still contains personal information — see the warning above. Replace it with a placeholder before saving.");
+      return;
+    }
     setSaving(true);
     try {
       await base44.entities.Template.update(edit.id, { content: edit.content, title: edit.title });
@@ -68,8 +80,28 @@ export default function TemplatesTab() {
               <h3 className="font-semibold text-brand-text">Edit template</h3>
               <div><Label className="text-xs text-brand-mutedtext">Title</Label><Input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} /></div>
               <div><Label className="text-xs text-brand-mutedtext">Content (Markdown)</Label><Textarea rows={12} className="font-mono text-xs" value={edit.content} onChange={(e) => setEdit({ ...edit, content: e.target.value })} /></div>
+              {leaks.length > 0 && (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+                  <p className="text-sm font-medium text-amber-300 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    Personal information in a host-facing template
+                  </p>
+                  <ul className="space-y-1.5">
+                    {leaks.map((l, i) => (
+                      <li key={i} className="text-xs text-brand-mutedtext">
+                        <span className="font-mono text-amber-200">{l.match}</span>
+                        <span className="text-brand-mutedtext"> — {l.kind}. {l.note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-brand-mutedtext">
+                    Every host copies this template and sends it out. Replace each one with a bracketed
+                    placeholder — <span className="font-mono">[YOUR PHONE]</span> — so it reads as their business.
+                  </p>
+                </div>
+              )}
               {error && <p className="text-sm text-red-400">{error}</p>}
-              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button></div>
+              <div className="flex gap-2"><Button variant="outline" className="flex-1 border-brand-line text-brand-text" onClick={() => setEdit(null)}>Cancel</Button><Button className="flex-1 bg-brand-gold text-brand-ink hover:bg-brand-gold/90" onClick={save} disabled={saving || leaks.length > 0}>{saving ? "Saving…" : leaks.length > 0 ? "Personal info found" : "Save"}</Button></div>
             </div>
           </div>
         )}
