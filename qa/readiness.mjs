@@ -269,9 +269,18 @@ for (const name of HOST_OWNED) {
 
   const legal = read(at('src/lib/legal.js'));
   chk(legal.includes('net4bes@nnaed.com'), 'I8 contact email is current');
+  // The personal-info detector has to name the strings it detects, so it is the
+  // one file allowed to contain them. Everything else must be clean.
+  const DETECTOR = at('src/lib/personalInfo.js');
   let stale = 0;
-  for (const f of src) if (/magaccommodations|netforbes/.test(read(f))) stale++;
-  chk(stale === 0, 'I8 no stale contact address anywhere in source');
+  const staleFiles = [];
+  for (const f of src) {
+    if (f === DETECTOR) continue;
+    if (/magaccommodations|netforbes/.test(read(f))) { stale++; staleFiles.push(f.split('/').pop()); }
+  }
+  chk(stale === 0, 'I8 no stale contact address anywhere in source', staleFiles.join(', '));
+  chk(/magaccommodations/.test(read(DETECTOR)),
+    'I8 the detector still knows the address it is meant to catch');
 
   const layout = read(at('src/components/Layout.jsx'));
   // Nav is now three groups: primary workflow, secondary tools, staff-only.
