@@ -627,11 +627,12 @@ for (const name of HOST_OWNED) {
     'O7 no markdown table in a template — the vault cannot render one');
   chk(!/- \[ \]/.test(seedTemplates),
     'O7 checkboxes use ☐, not GFM task syntax the vault renders literally');
-  chk(/pre: \(\{ children \}\)/.test(vault),
+  const vaultPage = read(at('src/pages/TemplateVault.jsx'));
+  chk(/pre: \(\{ children \}\)/.test(vaultPage),
     'O7 fenced email bodies get a styled block, not browser defaults');
-  chk(/whitespace-pre-wrap/.test(vault),
+  chk(/whitespace-pre-wrap/.test(vaultPage),
     'O7 a 70-column email wraps instead of running off a phone screen');
-  chk(/text\.includes\("\\n"\)/.test(vault),
+  chk(/text\.includes\("\\n"\)/.test(vaultPage),
     'O7 inline code and fenced blocks are styled apart, not identically');
 }
 
