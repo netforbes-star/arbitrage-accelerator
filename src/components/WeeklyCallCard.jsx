@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Video, ArrowRight } from "lucide-react";
-import ExternalLink from "@/components/ExternalLink";
+import { Video } from "lucide-react";
 
 /**
  * Weekly coaching call prep.
@@ -10,9 +9,10 @@ import ExternalLink from "@/components/ExternalLink";
  * each week's own numbers into the two or three things worth spending the call
  * on, so the host arrives with an agenda instead of a status update.
  *
- * The booking link is configured once by staff (see src/lib/app-params.js).
- * When it is absent the card still renders the agenda — the prep is the value,
- * the link is a convenience.
+ * Booking links are sent by Annette directly rather than held in the app.
+ * There is one coach and one link per week; storing it here would add a
+ * configuration surface that has to be kept current for no gain. The prep is
+ * the value this card exists to deliver.
  */
 
 const AGENDAS = {
@@ -54,7 +54,7 @@ const AGENDAS = {
   }
 };
 
-export default function WeeklyCallCard({ week, bookingUrl }) {
+export default function WeeklyCallCard({ week }) {
   const agenda = AGENDAS[week];
   if (!agenda) return null;
 
@@ -83,16 +83,9 @@ export default function WeeklyCallCard({ week, bookingUrl }) {
           <p className="text-xs text-brand-text">{agenda.decide}</p>
         </div>
 
-        {bookingUrl ? (
-          <ExternalLink href={bookingUrl} showIcon={false}
-             className="inline-flex items-center gap-1 text-xs font-medium text-brand-gold hover:underline">
-            Book this week's call <ArrowRight className="w-3 h-3" />
-          </ExternalLink>
-        ) : (
-          <p className="text-xs text-brand-mutedtext italic">
-            Your coach will send the booking link for this week's call.
-          </p>
-        )}
+        <p className="text-xs text-brand-mutedtext">
+          Annette sends the booking link for each week&rsquo;s call directly. Bring the three things above.
+        </p>
       </CardContent>
     </Card>
   );

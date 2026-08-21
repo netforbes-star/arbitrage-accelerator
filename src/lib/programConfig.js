@@ -5,17 +5,6 @@
  * Edit the value, save, and it is live everywhere it is used.
  */
 
-/**
- * Booking link for the weekly 30-minute coaching call.
- *
- * Paste your scheduler URL between the quotes — Calendly, GHL, Google
- * Appointments, whatever you use. Leave it empty and the app simply tells the
- * host their coach will send a link, so nothing breaks either way.
- *
- * Example: export const CALL_BOOKING_URL = "https://calendly.com/nursenet/sprint-call";
- */
-export const CALL_BOOKING_URL = "";
-
 /** Weekly 30-minute calls are part of the sprint. */
 export const WEEKLY_CALL_MINUTES = 30;
 
